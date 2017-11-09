@@ -1,0 +1,4 @@
+# SmallVideo
+使用libyuv和FFmpeg进行小视频的录制
+
+学习使用libyuv和ffmpeg，实现像微信和微博那样的小视频录制
