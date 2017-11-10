@@ -25,11 +25,15 @@ import com.hzl.smallvideo.util.CameraUtil;
  * <p>
  * 将camera和sufaceview结合起来的控件
  */
+@SuppressWarnings("deprecation")
 public class CameraSurfaceView extends FrameLayout implements CameraSurfaceApi, Camera.PreviewCallback, SurfaceHolder.Callback {
+
+    private static final String TAG = "CameraSurfaceView";
 
     private SurfaceView mSurfaceView;
     private ImageView ivFoucView;
     private CameraUtil mCameraUtil;
+    private double pointLength;  //双指刚按下去时候的距离
 
     private CameraYUVDataListener listener;
 
@@ -84,7 +88,7 @@ public class CameraSurfaceView extends FrameLayout implements CameraSurfaceApi, 
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        holder.setFixedSize(width, height);
+
     }
 
     @Override
@@ -93,8 +97,8 @@ public class CameraSurfaceView extends FrameLayout implements CameraSurfaceApi, 
     }
 
     @Override
-    public void setCameraType(int cameraType) {
-        mCameraUtil.setCurrentCameraType(cameraType);
+    public void setLightingState(boolean isOpen) {
+        mCameraUtil.setLightingState(isOpen);
     }
 
     @Override
@@ -108,19 +112,26 @@ public class CameraSurfaceView extends FrameLayout implements CameraSurfaceApi, 
     }
 
     @Override
-    public void changeCamera() {
+    public void takePicture() {
+        mCameraUtil.takePicture();
+    }
+
+    @Override
+    public int changeCamera() {
         mCameraUtil.releaseCamera();
         if (mCameraUtil.getCurrentCameraType() == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-            mCameraUtil.openCamera(Camera.CameraInfo.CAMERA_FACING_BACK);
+            mCameraUtil.setCurrentCameraType(Camera.CameraInfo.CAMERA_FACING_BACK);
         } else {
-            mCameraUtil.openCamera(Camera.CameraInfo.CAMERA_FACING_FRONT);
+            mCameraUtil.setCurrentCameraType(Camera.CameraInfo.CAMERA_FACING_FRONT);
         }
+        openCamera();
         mSurfaceView.post(new Runnable() {
             @Override
             public void run() {
                 mCameraUtil.handleCameraStartPreview(mSurfaceView.getHolder(), CameraSurfaceView.this);
             }
         });
+        return mCameraUtil.getCurrentCameraType();
     }
 
     @Override
@@ -157,10 +168,29 @@ public class CameraSurfaceView extends FrameLayout implements CameraSurfaceApi, 
         mCameraUtil.startAutoFocus();
     }
 
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (event.getPointerCount() == 1 && event.getAction() == MotionEvent.ACTION_DOWN) {
             startAutoFocus(event.getX(), event.getY());
+        }
+        //这个时候要使用的是调整那个缩放
+        if (event.getPointerCount() == 2) {
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    pointLength = Math.sqrt(Math.pow(event.getX(0) - event.getX(1), 2) + Math.pow(event.getY(0) - event.getY(1), 2));
+                    break;
+                case MotionEvent.ACTION_MOVE:
+                    double length = Math.sqrt(Math.pow(event.getX(0) - event.getX(1), 2) + Math.pow(event.getY(0) - event.getY(1), 2));
+                    //计算差值,
+                    double extLength = length - pointLength;
+                    //大于0表示放大，小于0表示缩小
+                    if (Math.abs(extLength) > 0) {
+                        mCameraUtil.setZoomPlus(extLength > 0);
+                        pointLength = length;
+                    }
+                    break;
+            }
         }
         return true;
     }

@@ -31,7 +31,7 @@ public class FFmpegUtil {
 
     public static native void getAACFile();
 
-    //---------------这里是把h624和aac合成mp4的方法---------------------
-    public static native void getMP4File(String h624FilePath, String aacFilePath, String mp4FilePath);
+    //---------------这里是把h264和aac合成mp4的方法---------------------
+    public static native void getMP4File(String h264FilePath, String aacFilePath, String mp4FilePath);
 
 }

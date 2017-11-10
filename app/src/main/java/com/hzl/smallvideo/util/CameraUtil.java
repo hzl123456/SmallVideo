@@ -1,12 +1,17 @@
 package com.hzl.smallvideo.util;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
+import android.graphics.Matrix;
 import android.hardware.Camera;
+import android.os.Environment;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
 import com.hzl.smallvideo.application.MainApplication;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -63,9 +68,9 @@ public class CameraUtil {
     }
 
     /**
-     * 摄像头的前后置
+     * 摄像头的前后置,默认为后置摄像头
      **/
-    private int mCurrentCameraType = Camera.CameraInfo.CAMERA_FACING_FRONT;
+    private int mCurrentCameraType = Camera.CameraInfo.CAMERA_FACING_BACK;
 
     public void setCurrentCameraType(int mCurrentCameraType) {
         this.mCurrentCameraType = mCurrentCameraType;
@@ -195,6 +200,8 @@ public class CameraUtil {
         if ("true".equals(parameters.get("video-stabilization-supported"))) {
             parameters.set("video-stabilization", "true");
         }
+        //设置图片的大小
+        parameters.setPictureSize(cameraWidth, cameraHeight);
         parameters.setPreviewFormat(ImageFormat.NV21);
         mCamera.setParameters(parameters);
         /**
@@ -252,5 +259,71 @@ public class CameraUtil {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * 打开或者关闭闪光灯
+     **/
+    public void setLightingState(boolean isOpen) {
+        if (mCamera == null) {
+            return;
+        }
+        try {
+            Camera.Parameters mParameters = mCamera.getParameters();
+            if (isOpen) {
+                mParameters.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
+            } else {
+                mParameters.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
+            }
+            mCamera.setParameters(mParameters);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    /**
+     * 调整焦距,true表示+1，false表示减1
+     **/
+    public void setZoomPlus(boolean isPlus) {
+        if (mCamera == null) {
+            return;
+        }
+        try {
+            Camera.Parameters mParameters = mCamera.getParameters();
+            int value = mParameters.getZoom();
+            value += (isPlus ? 1 : -1);
+            if (value < 0) {
+                value = 0;
+            } else if (value > mParameters.getMaxZoom()) {
+                value = mParameters.getMaxZoom();
+            }
+            mParameters.setZoom(value);
+            mCamera.setParameters(mParameters);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    /**
+     * 进行拍照
+     **/
+    public void takePicture() {
+        mCamera.takePicture(null, null, new Camera.PictureCallback() {
+            @Override
+            public void onPictureTaken(byte[] data, Camera camera) {
+                Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+                Matrix matrix = new Matrix();
+                //进行旋转，如果是前置摄像头还需要镜像
+                matrix.postRotate(morientation);
+                if (mCurrentCameraType == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+                    matrix.postScale(-1, 1);
+                }
+                bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+                //进行图片保存
+                String filePath = Environment.getExternalStorageDirectory().getPath() + File.separator + System.currentTimeMillis() + ".png";
+                AppUtil.saveBitmapToFile(bitmap, filePath);
+                DialogUtil.showToast("图片保存成功");
+            }
+        });
     }
 }

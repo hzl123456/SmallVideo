@@ -1,12 +1,16 @@
 package com.hzl.smallvideo.util;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.WindowManager;
 
 import com.hzl.smallvideo.application.MainApplication;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.reflect.Method;
 
 /**
@@ -48,4 +52,26 @@ public class AppUtil {
         return screenHeight;
     }
 
+    public static void saveBitmapToFile(Bitmap bm, String filePath) {
+        File file = new File(filePath);
+        try {
+            FileOutputStream out = new FileOutputStream(file);
+            bm.compress(Bitmap.CompressFormat.JPEG, 100, out);
+            out.flush();
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public static int px2dip(float pxValue) {
+        final float scale = MainApplication.getInstance().getResources().getDisplayMetrics().density;
+        return (int) (pxValue / scale + 0.5f);
+    }
+
+    public static int dip2px(float dpValue) {
+        final float scale = MainApplication.getInstance().getResources().getDisplayMetrics().density;
+        return (int) (dpValue * scale + 0.5f);
+    }
 }

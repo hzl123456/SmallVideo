@@ -7,7 +7,7 @@ package com.hzl.smallvideo.manager.listener;
 
 public abstract class RecordListener {
 
-    //表示h624编码结束
+    //表示h264编码结束
     public void videoComplete() {
     }
 

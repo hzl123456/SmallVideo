@@ -5,6 +5,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Environment;
+import android.util.Log;
 
 import com.hzl.smallvideo.application.MainApplication;
 import com.hzl.smallvideo.manager.api.MangerApi;
@@ -25,7 +26,7 @@ import static android.content.Context.SENSOR_SERVICE;
  * 作者：请叫我百米冲刺 on 2017/11/7 上午10:52
  * 邮箱：mail@hezhilin.cc
  */
-
+@SuppressWarnings("deprecation")
 public class VideoRecordManager implements MangerApi, SensorEventListener, CameraYUVDataListener {
 
     private String filePath = Environment.getExternalStorageDirectory().getPath() + File.separator + "ffmpeg.h264";
@@ -60,8 +61,16 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
         mSensorManager = (SensorManager) MainApplication.getInstance().getSystemService(SENSOR_SERVICE);
     }
 
-    public void changeCamera() {
-        mCameraSurfaceView.changeCamera();
+    public int changeCamera() {
+        return mCameraSurfaceView.changeCamera();
+    }
+
+    public void setLightState(boolean isOpen) {
+        mCameraSurfaceView.setLightingState(isOpen);
+    }
+
+    public void takePicture() {
+        mCameraSurfaceView.takePicture();
     }
 
     @Override
@@ -135,7 +144,7 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
 
     @Override
     public void onCallback(final byte[] data) {
-        if (!isRunning || isPause) {
+        if (!isRunning || isPause) { //如果是没有开启录制和暂停就进行返回
             return;
         }
         yuvList.addLast(data);
@@ -150,10 +159,12 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
                                 final int morientation = mCameraUtil.getMorientation();
                                 YuvUtil.compressYUV(data, mCameraUtil.getCameraWidth(), mCameraUtil.getCameraHeight(), yuvData, outHeight, outWidth, 0, morientation, morientation == 270 ? mCameraUtil.isMirror() : false);
                                 FFmpegUtil.pushDataToH264File(yuvData);
+                                count++;
                             }
                             yuvList.removeFirst();
                         } else if (!isRunning && !isPause) {
                             FFmpegUtil.getH264File();
+                            Log.i("dddd->", count + "_" + ((float) count / mCameraUtil.getFrameRate()));
                             if (listener != null) {
                                 listener.videoComplete();
                             }
@@ -167,6 +178,8 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
             yuvThread.start();
         }
     }
+
+    private int count;
 
     @Override
     public void onSensorChanged(SensorEvent event) {
@@ -185,7 +198,7 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
         float deltaY = Math.abs(mLastY - y);
         float deltaZ = Math.abs(mLastZ - z);
 
-        if (mCameraSurfaceView != null && (deltaX > 1.0 || deltaY > 1.0 || deltaZ > 1.0)) {
+        if (mCameraSurfaceView != null && (deltaX > 0.6 || deltaY > 0.6 || deltaZ > 0.6)) {
             mCameraSurfaceView.startAutoFocus(-1, -1);
         }
 

@@ -8,11 +8,13 @@ public interface CameraSurfaceApi {
 
     void startAutoFocus(float x, float y);
 
-    void setCameraType(int cameraType);
+    void setLightingState(boolean isOpen);
 
     void openCamera();
 
     void releaseCamera();
 
-    void changeCamera();
+    void takePicture();
+
+    int changeCamera();
 }

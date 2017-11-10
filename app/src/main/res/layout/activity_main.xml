@@ -1,27 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#000000">
 
     <com.hzl.smallvideo.manager.camera.CameraSurfaceView
         android:id="@+id/camera_surface"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:layout_centerInParent="true" />
 
-    <Button
+    <ImageView
         android:id="@+id/btn_camera"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="30dp"
         android:layout_alignParentRight="true"
-        android:layout_margin="10dp"
-        android:text="翻转" />
+        android:layout_margin="20dp"
+        android:src="@mipmap/camera_change" />
 
-    <Button
-        android:id="@+id/btn_start"
+    <ImageView
+        android:id="@+id/btn_light"
         android:layout_width="wrap_content"
+        android:layout_height="30dp"
+        android:layout_centerHorizontal="true"
+        android:layout_margin="20dp"
+        android:background="@null"
+        android:src="@mipmap/light_close" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/btn_start"
+        android:layout_centerHorizontal="true"
+        android:text="轻触拍照，长按摄像"
+        android:textColor="#ffffff" />
+
+    <com.hzl.smallvideo.manager.camera.CaptureButton
+        android:id="@+id/btn_start"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:text="开启录制" />
+        android:layout_marginBottom="50dp" />
 
 </RelativeLayout>

@@ -14,7 +14,7 @@ import java.io.IOException;
  * 作者：请叫我百米冲刺 on 2017/11/7 上午11:28
  * 邮箱：mail@hezhilin.cc
  */
-
+@SuppressWarnings("deprecation")
 public class RecordManager extends RecordListener {
 
     private VideoRecordManager mVideoRecordManager;
@@ -31,8 +31,8 @@ public class RecordManager extends RecordListener {
         mAudioRecordManager.setRecordListener(this);
     }
 
-    public void changeCamera() {
-        mVideoRecordManager.changeCamera();
+    public int changeCamera() {
+        return mVideoRecordManager.changeCamera();
     }
 
     @Override
@@ -61,7 +61,7 @@ public class RecordManager extends RecordListener {
                 @Override
                 public void run() {
                     FFmpegUtil.getMP4File(mVideoRecordManager.getFilePath(), mAudioRecordManager.getFilePath(), filePath);
-                    //完成之后删除h624和aac
+                    //完成之后删除h264和aac
                     new File(mVideoRecordManager.getFilePath()).delete();
                     new File(mAudioRecordManager.getFilePath()).delete();
                     DialogUtil.showToast("视频录制成功");
@@ -70,6 +70,12 @@ public class RecordManager extends RecordListener {
                 }
             }).start();
         }
+    }
+
+    public void takePicture() {mVideoRecordManager.takePicture();}
+
+    public void setLightingState(boolean isOpen) {
+        mVideoRecordManager.setLightState(isOpen);
     }
 
     public void onResume() {
@@ -93,7 +99,8 @@ public class RecordManager extends RecordListener {
     }
 
     public void pauseRecord() {
-
+        mVideoRecordManager.pauseRecord();
+        mAudioRecordManager.pauseRecord();
     }
 
     public void stopRecord() {

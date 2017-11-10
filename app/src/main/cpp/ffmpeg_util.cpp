@@ -269,10 +269,10 @@ Java_com_hzl_smallvideo_util_FFmpegUtil_getAACFile(JNIEnv *env, jclass type) {
 //-----------------------这边是将音视频文件合成需要的------------------------------
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_hzl_smallvideo_util_FFmpegUtil_getMP4File(JNIEnv *env, jclass type, jstring h624FilePath_,
+Java_com_hzl_smallvideo_util_FFmpegUtil_getMP4File(JNIEnv *env, jclass type, jstring h264FilePath_,
                                                    jstring aacFilePath_, jstring mp4FilePath_) {
     //文件路径信息
-    const char *in_filename_v = env->GetStringUTFChars(h624FilePath_, 0);
+    const char *in_filename_v = env->GetStringUTFChars(h264FilePath_, 0);
     const char *in_filename_a = env->GetStringUTFChars(aacFilePath_, 0);
     const char *out_filename = env->GetStringUTFChars(mp4FilePath_, 0);
 
