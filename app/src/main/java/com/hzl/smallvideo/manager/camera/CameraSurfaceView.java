@@ -104,6 +104,12 @@ public class CameraSurfaceView extends FrameLayout implements CameraSurfaceApi, 
     @Override
     public void openCamera() {
         mCameraUtil.openCamera(mCameraUtil.getCurrentCameraType());
+        mSurfaceView.post(new Runnable() {
+            @Override
+            public void run() {
+                mCameraUtil.handleCameraStartPreview(mSurfaceView.getHolder(), CameraSurfaceView.this);
+            }
+        });
     }
 
     @Override
@@ -125,12 +131,6 @@ public class CameraSurfaceView extends FrameLayout implements CameraSurfaceApi, 
             mCameraUtil.setCurrentCameraType(Camera.CameraInfo.CAMERA_FACING_FRONT);
         }
         openCamera();
-        mSurfaceView.post(new Runnable() {
-            @Override
-            public void run() {
-                mCameraUtil.handleCameraStartPreview(mSurfaceView.getHolder(), CameraSurfaceView.this);
-            }
-        });
         return mCameraUtil.getCurrentCameraType();
     }
 

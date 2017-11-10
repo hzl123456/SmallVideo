@@ -60,11 +60,15 @@ public class MainActivity extends Activity implements View.OnClickListener {
             @Override
             public void cancel() { //拍照取消
                 //TODO 删除bitmap，然后重新刷新下
+                mRecordManager.onStop();
+                mRecordManager.onResume();
             }
 
             @Override
             public void determine() { //拍照确定
                 //TODO 保存bitmap，然后刷新下
+                mRecordManager.onStop();
+                mRecordManager.onResume();
             }
 
             @Override
