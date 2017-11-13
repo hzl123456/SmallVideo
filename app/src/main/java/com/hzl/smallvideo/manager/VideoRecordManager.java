@@ -10,6 +10,7 @@ import android.util.Log;
 import com.hzl.smallvideo.application.MainApplication;
 import com.hzl.smallvideo.manager.api.MangerApi;
 import com.hzl.smallvideo.manager.camera.CameraSurfaceView;
+import com.hzl.smallvideo.manager.listener.CameraPictureListener;
 import com.hzl.smallvideo.manager.listener.CameraYUVDataListener;
 import com.hzl.smallvideo.manager.listener.RecordListener;
 import com.hzl.smallvideo.util.CameraUtil;
@@ -69,8 +70,8 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
         mCameraSurfaceView.setLightingState(isOpen);
     }
 
-    public void takePicture() {
-        mCameraSurfaceView.takePicture();
+    public void takePicture(CameraPictureListener listener) {
+        mCameraSurfaceView.takePicture(listener);
     }
 
     @Override
@@ -117,6 +118,8 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
         }
         isRunning = true;
         isPause = false;
+
+        count = 0;
     }
 
     @Override

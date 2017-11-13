@@ -16,6 +16,7 @@ import android.widget.ImageView;
 
 import com.hzl.smallvideo.R;
 import com.hzl.smallvideo.manager.api.CameraSurfaceApi;
+import com.hzl.smallvideo.manager.listener.CameraPictureListener;
 import com.hzl.smallvideo.manager.listener.CameraYUVDataListener;
 import com.hzl.smallvideo.util.CameraUtil;
 
@@ -118,8 +119,8 @@ public class CameraSurfaceView extends FrameLayout implements CameraSurfaceApi, 
     }
 
     @Override
-    public void takePicture() {
-        mCameraUtil.takePicture();
+    public void takePicture(CameraPictureListener listener) {
+        mCameraUtil.takePicture(listener);
     }
 
     @Override

@@ -1,33 +1,47 @@
 package com.hzl.smallvideo.activity;
 
 import android.app.Activity;
+import android.graphics.Bitmap;
 import android.hardware.Camera;
+import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.os.Environment;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
+import android.widget.VideoView;
 
 import com.hzl.smallvideo.R;
 import com.hzl.smallvideo.application.MainApplication;
 import com.hzl.smallvideo.manager.RecordManager;
 import com.hzl.smallvideo.manager.camera.CameraSurfaceView;
 import com.hzl.smallvideo.manager.camera.CaptureButton;
+import com.hzl.smallvideo.manager.listener.CameraPictureListener;
+import com.hzl.smallvideo.manager.listener.RecordFinishListener;
+import com.hzl.smallvideo.util.AppUtil;
+import com.hzl.smallvideo.util.DialogUtil;
+
+import java.io.File;
 
 @SuppressWarnings("deprecation")
 public class MainActivity extends Activity implements View.OnClickListener {
 
     private CameraSurfaceView mSurfaceView;
-
-    private ImageView mBtnCamera;
-
-    private ImageView mBtnLight;
-
     private CaptureButton mBtnStart;
+    private VideoView mVideoView;
+    private ImageView mBtnCamera;
+    private ImageView mBtnLight;
+    private ImageView ivImage;
 
     //音视频的处理的类
     private RecordManager mRecordManager;
 
     private boolean isLighting;
+
+    //拍照的图片
+    private Bitmap bitmap;
+    //合成视频的路径
+    private String filePath;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,9 +55,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     private void initView() {
         mSurfaceView = (CameraSurfaceView) findViewById(R.id.camera_surface);
+        mBtnStart = (CaptureButton) findViewById(R.id.btn_start);
+        mVideoView = (VideoView) findViewById(R.id.video_view);
         mBtnCamera = (ImageView) findViewById(R.id.btn_camera);
         mBtnLight = (ImageView) findViewById(R.id.btn_light);
-        mBtnStart = (CaptureButton) findViewById(R.id.btn_start);
+        ivImage = (ImageView) findViewById(R.id.iv_image);
 
         mBtnCamera.setOnClickListener(this);
         mBtnLight.setOnClickListener(this);
@@ -54,21 +70,35 @@ public class MainActivity extends Activity implements View.OnClickListener {
             @Override
             public void capture() { //进行拍照
                 //进行拍照
-                mRecordManager.takePicture();
+                mRecordManager.takePicture(new CameraPictureListener() {
+
+                    @Override
+                    public void onPictureBitmap(Bitmap btmp) {
+                        //完成拍照了，通知控件进行按钮控件的更新
+                        mBtnStart.showControllerButtons();
+                        //这里得到正确旋转和翻转之后的图片
+                        MainActivity.this.bitmap = btmp;
+                        ivImage.setImageBitmap(btmp);
+                        ivImage.setVisibility(View.VISIBLE);
+                        //显示到界面上去，然后刷新camera
+                        mRecordManager.onStop();
+                        mRecordManager.onResume();
+                    }
+                });
             }
 
             @Override
             public void cancel() { //拍照取消
-                //TODO 删除bitmap，然后重新刷新下
-                mRecordManager.onStop();
-                mRecordManager.onResume();
+                MainActivity.this.bitmap = null;
+                ivImage.setVisibility(View.GONE);
             }
 
             @Override
             public void determine() { //拍照确定
-                //TODO 保存bitmap，然后刷新下
-                mRecordManager.onStop();
-                mRecordManager.onResume();
+                final String filePath = Environment.getExternalStorageDirectory().getPath() + File.separator + System.currentTimeMillis() + ".png";
+                AppUtil.saveBitmapToFile(MainActivity.this.bitmap, filePath);
+                DialogUtil.showToast("图片保存成功");
+                ivImage.setVisibility(View.GONE);
             }
 
             @Override
@@ -78,24 +108,60 @@ public class MainActivity extends Activity implements View.OnClickListener {
             }
 
             @Override
-            public void rencodEnd() { //停止录制
+            public void rencodEnd(final boolean isShortTime) { //停止录制
                 //录制结束
-                mRecordManager.stopRecord();
-
+                mRecordManager.stopRecord(new RecordFinishListener() {
+                    @Override
+                    public void onRecordFinish(String filePath) {
+                        if (isShortTime) {
+                            //删除录制的小视频
+                            new File(filePath).delete();
+                            DialogUtil.showToast("录制时间太短");
+                        } else {
+                            //得到合成的mp4的文件路径
+                            MainActivity.this.filePath = filePath;
+                            //完成录制了，通知控件进行按钮控件的更新
+                            mBtnStart.showControllerButtons();
+                            //进行小视频的循环播放
+                            startVideo(filePath);
+                        }
+                    }
+                });
             }
 
             @Override
             public void getRecordResult() { //需要录制
-
+                DialogUtil.showToast("视频保存成功");
+                mVideoView.setVisibility(View.GONE);
             }
 
             @Override
             public void deleteRecordResult() {//删除录制
+                new File(filePath).delete();
+                mVideoView.setVisibility(View.GONE);
+            }
 
+            @Override
+            public void actionRecord() { //对视频和图片进行操作，主要是添加水印
+                DialogUtil.showToast("该功能暂未开放");
             }
         });
     }
 
+    public void startVideo(String videoPath) {
+        mVideoView.setVisibility(View.VISIBLE);
+        mVideoView.setZOrderMediaOverlay(true);
+        mVideoView.setVideoPath("file://" + videoPath);
+        mVideoView.start();
+        mVideoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(MediaPlayer mp) {
+                mp.setLooping(true);
+                mp.start();
+            }
+        });
+
+    }
 
     @Override
     public void onClick(View v) {

@@ -1,10 +1,13 @@
 package com.hzl.smallvideo.manager;
 
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 
 import com.hzl.smallvideo.manager.camera.CameraSurfaceView;
+import com.hzl.smallvideo.manager.listener.CameraPictureListener;
+import com.hzl.smallvideo.manager.listener.RecordFinishListener;
 import com.hzl.smallvideo.manager.listener.RecordListener;
-import com.hzl.smallvideo.util.DialogUtil;
 import com.hzl.smallvideo.util.FFmpegUtil;
 
 import java.io.File;
@@ -19,6 +22,7 @@ public class RecordManager extends RecordListener {
 
     private VideoRecordManager mVideoRecordManager;
     private AudioRecordManager mAudioRecordManager;
+    private RecordFinishListener mRecordFinishListener;
 
     private boolean isVideoComplete;
     private boolean isAudioComplete;
@@ -64,15 +68,25 @@ public class RecordManager extends RecordListener {
                     //完成之后删除h264和aac
                     new File(mVideoRecordManager.getFilePath()).delete();
                     new File(mAudioRecordManager.getFilePath()).delete();
-                    DialogUtil.showToast("视频录制成功");
                     isVideoComplete = false;
                     isAudioComplete = false;
+                    new Handler(Looper.getMainLooper()).post(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (mRecordFinishListener != null) {
+                                mRecordFinishListener.onRecordFinish(filePath);
+                            }
+                        }
+                    });
                 }
             }).start();
+
         }
     }
 
-    public void takePicture() {mVideoRecordManager.takePicture();}
+    public void takePicture(CameraPictureListener listener) {
+        mVideoRecordManager.takePicture(listener);
+    }
 
     public void setLightingState(boolean isOpen) {
         mVideoRecordManager.setLightState(isOpen);
@@ -103,7 +117,8 @@ public class RecordManager extends RecordListener {
         mAudioRecordManager.pauseRecord();
     }
 
-    public void stopRecord() {
+    public void stopRecord(RecordFinishListener mRecordFinishListener) {
+        this.mRecordFinishListener = mRecordFinishListener;
         mVideoRecordManager.stopRecord();
         mAudioRecordManager.stopRecord();
     }

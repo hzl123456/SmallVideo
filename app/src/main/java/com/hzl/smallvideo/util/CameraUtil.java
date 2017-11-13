@@ -5,13 +5,12 @@ import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.hardware.Camera;
-import android.os.Environment;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
 import com.hzl.smallvideo.application.MainApplication;
+import com.hzl.smallvideo.manager.listener.CameraPictureListener;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -307,7 +306,7 @@ public class CameraUtil {
     /**
      * 进行拍照
      **/
-    public void takePicture() {
+    public void takePicture(final CameraPictureListener listener) {
         mCamera.takePicture(null, null, new Camera.PictureCallback() {
             @Override
             public void onPictureTaken(byte[] data, Camera camera) {
@@ -319,10 +318,9 @@ public class CameraUtil {
                     matrix.postScale(-1, 1);
                 }
                 bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-                //进行图片保存
-                String filePath = Environment.getExternalStorageDirectory().getPath() + File.separator + System.currentTimeMillis() + ".png";
-                AppUtil.saveBitmapToFile(bitmap, filePath);
-                DialogUtil.showToast("图片保存成功");
+                if (listener != null) {
+                    listener.onPictureBitmap(bitmap);
+                }
             }
         });
     }

@@ -4,11 +4,31 @@
     android:layout_height="match_parent"
     android:background="#000000">
 
+    <!-- 进行视频录制和播放的控件 -->
     <com.hzl.smallvideo.manager.camera.CameraSurfaceView
         android:id="@+id/camera_surface"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_centerInParent="true" />
+
+    <!-- 显示拍照图片的控件 -->
+    <ImageView
+        android:id="@+id/iv_image"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_centerInParent="true"
+        android:visibility="gone" />
+
+    <!--进行视频播放的控件-->
+    <VideoView
+        android:id="@+id/video_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_centerInParent="true"
+        android:visibility="gone" />
+
+    <!-- 进行水印添加的控件 -->
+
 
     <ImageView
         android:id="@+id/btn_camera"

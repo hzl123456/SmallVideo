@@ -12,10 +12,8 @@ import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.animation.LinearInterpolator;
 
 import com.hzl.smallvideo.util.AppUtil;
-import com.hzl.smallvideo.util.DialogUtil;
 
 /**
  * 作者：请叫我百米冲刺 on 2017/11/10 上午11:58
@@ -44,21 +42,18 @@ public class CaptureButton extends View {
     //半径变化后
     private float btn_after_inside_radius;
     private float btn_after_outside_radius;
-
     private float btn_left_X, btn_right_X, btn_result_radius;
 
     //状态
     private int STATE_SELECTED;
     private final int STATE_LESSNESS = 0;
     private final int STATE_KEY_DOWN = 1;
-    private final int STATE_CAPTURED = 2;
-    private final int STATE_RECORD = 3;
-    private final int STATE_PICTURE_BROWSE = 4;
-    private final int STATE_RECORD_BROWSE = 5;
-    private final int STATE_READYQUIT = 6;
-    private final int STATE_RECORDED = 7;
+    private final int STATE_RECORD = 2;
+    private final int STATE_PICTURE_BROWSE = 3;
+    private final int STATE_RECORD_BROWSE = 4;
 
-    private float key_down_Y;
+    //抬起的时候的操作变化，一种是视频录制成功，一种是图片拍照成功，当然还有一种初始为0的状态
+    private int STATE_UP;
 
     private float progress = 0;
     private LongPressRunnable longPressRunnable = new LongPressRunnable();
@@ -86,8 +81,6 @@ public class CaptureButton extends View {
         paintArc.setColor(0xFF00CC00);
         paintArc.setStyle(Paint.Style.STROKE);
         paintArc.setStrokeWidth(arcWidth);
-
-
     }
 
 
@@ -138,12 +131,15 @@ public class CaptureButton extends View {
 
         } else if (STATE_SELECTED == STATE_RECORD_BROWSE || STATE_SELECTED == STATE_PICTURE_BROWSE) {
             //拍完照或者录完视频需要绘制的内容
-            mPaint.setColor(0xFFEEEEEE);
+            mPaint.setColor(Color.WHITE);
             canvas.drawCircle(btn_left_X, btn_center_Y, btn_result_radius, mPaint);
+            mPaint.setColor(0xFFEEEEEE);
+            canvas.drawCircle(btn_center_X, btn_center_Y, btn_result_radius, mPaint);
             mPaint.setColor(Color.WHITE);
             canvas.drawCircle(btn_right_X, btn_center_Y, btn_result_radius, mPaint);
 
-            //绘制左边返回按钮
+
+            //---------------绘制左边返回按钮----------------
             Paint paint = new Paint();
             paint.setAntiAlias(true);
             paint.setColor(Color.BLACK);
@@ -166,6 +162,22 @@ public class CaptureButton extends View {
             path.close();
             canvas.drawPath(path, paint);
 
+            //---------------绘制中间的操作按钮----------------
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setColor(Color.BLACK);
+            paint.setStrokeWidth(AppUtil.dip2px(2));
+            path.reset();
+            length = AppUtil.dip2px(10);
+            path.moveTo(btn_center_X - length, btn_center_Y - AppUtil.dip2px(6));
+            path.lineTo(btn_center_X + length, btn_center_Y - AppUtil.dip2px(6));
+            path.moveTo(btn_center_X - length, btn_center_Y);
+            path.lineTo(btn_center_X + length, btn_center_Y);
+            path.moveTo(btn_center_X - length, btn_center_Y + AppUtil.dip2px(6));
+            path.lineTo(btn_center_X + length, btn_center_Y + AppUtil.dip2px(6));
+            canvas.drawPath(path, paint);
+
+
+            //---------------绘制右边的确定按钮----------------
             paint.setStyle(Paint.Style.STROKE);
             paint.setColor(0xFF00CC00);
             paint.setStrokeWidth(AppUtil.dip2px(2));
@@ -184,15 +196,33 @@ public class CaptureButton extends View {
     public boolean onTouchEvent(MotionEvent event) {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                //空状态
                 if (STATE_SELECTED == STATE_LESSNESS) {
-                    //拍照事件按下
+                    //此时是中间的那个开始按钮的按下
                     if (event.getY() > btn_center_Y - btn_outside_radius && event.getY() < btn_center_Y + btn_outside_radius && event.getX() > btn_center_X - btn_outside_radius && event.getX() < btn_center_X + btn_outside_radius && event.getPointerCount() == 1) {
-                        key_down_Y = event.getY();
                         STATE_SELECTED = STATE_KEY_DOWN;
-                        postCheckForLongTouch(event.getX(), event.getY());
+                        //延迟500毫秒启动一个缩放的动画
+                        postDelayed(longPressRunnable, 500);
                     }
+                }
+                break;
+            case MotionEvent.ACTION_UP:
+                removeCallbacks(longPressRunnable);
+                if (STATE_SELECTED == STATE_KEY_DOWN) {
+                    if (event.getY() > btn_center_Y - btn_outside_radius &&
+                            event.getY() < btn_center_Y + btn_outside_radius &&
+                            event.getX() > btn_center_X - btn_outside_radius &&
+                            event.getX() < btn_center_X + btn_outside_radius) {
+                        //表示此时是拍照成功的操作
+                        STATE_UP = STATE_PICTURE_BROWSE;
+                        if (mCaptureListener != null) {
+                            mCaptureListener.capture();
+                        }
+                    }
+                } else if (STATE_SELECTED == STATE_RECORD) {
+                    //在这里只需要调用record_anim.cancel();就会进行end的回调
+                    record_anim.cancel();
                 } else if (STATE_SELECTED == STATE_RECORD_BROWSE || STATE_SELECTED == STATE_PICTURE_BROWSE) {
+                    //此时是左边那个取消按钮的按下
                     if (event.getY() > btn_center_Y - btn_result_radius &&
                             event.getY() < btn_center_Y + btn_result_radius &&
                             event.getX() > btn_left_X - btn_result_radius &&
@@ -200,18 +230,17 @@ public class CaptureButton extends View {
                             event.getPointerCount() == 1
                             ) {
                         if (mCaptureListener != null) {
-
                             if (STATE_SELECTED == STATE_RECORD_BROWSE) {
                                 mCaptureListener.deleteRecordResult();
                             } else if (STATE_SELECTED == STATE_PICTURE_BROWSE) {
                                 mCaptureListener.cancel();
                             }
                         }
-                        STATE_SELECTED = STATE_LESSNESS;
+                        STATE_SELECTED = STATE_UP = STATE_LESSNESS;
                         btn_left_X = btn_center_X;
                         btn_right_X = btn_center_X;
-                        invalidate();
-                    } else if (event.getY() > btn_center_Y - btn_result_radius &&
+                        postInvalidate();
+                    } else if (event.getY() > btn_center_Y - btn_result_radius && //此时是右边那个确认按钮的按下
                             event.getY() < btn_center_Y + btn_result_radius &&
                             event.getX() > btn_right_X - btn_result_radius &&
                             event.getX() < btn_right_X + btn_result_radius &&
@@ -224,84 +253,39 @@ public class CaptureButton extends View {
                                 mCaptureListener.determine();
                             }
                         }
-                        STATE_SELECTED = STATE_LESSNESS;
+                        STATE_SELECTED = STATE_UP = STATE_LESSNESS;
                         btn_left_X = btn_center_X;
                         btn_right_X = btn_center_X;
-                        invalidate();
-                    }
-                }
-                break;
-            case MotionEvent.ACTION_UP:
-                removeCallbacks(longPressRunnable);
-                if (STATE_SELECTED == STATE_KEY_DOWN) {
-                    if (event.getY() > btn_center_Y - btn_outside_radius &&
+                        postInvalidate();
+                    } else if (event.getY() > btn_center_Y - btn_outside_radius &&
                             event.getY() < btn_center_Y + btn_outside_radius &&
                             event.getX() > btn_center_X - btn_outside_radius &&
-                            event.getX() < btn_center_X + btn_outside_radius) {
-                        STATE_SELECTED = STATE_PICTURE_BROWSE;
-                        captureAnimation(getWidth() / 5, (getWidth() / 5) * 4);
-                        invalidate();
+                            event.getX() < btn_center_X + btn_outside_radius &&
+                            event.getPointerCount() == 1) {
                         if (mCaptureListener != null) {
-                            mCaptureListener.capture();
-                        }
-                        if (btn_outside_radius == btn_after_outside_radius && btn_inside_radius == btn_after_inside_radius) {
-                            startAnimation(btn_after_outside_radius, btn_before_outside_radius, btn_after_inside_radius, btn_before_inside_radius);
-                        } else {
-                            startAnimation(btn_after_outside_radius, btn_before_outside_radius, btn_after_inside_radius, btn_before_inside_radius);
+                            mCaptureListener.actionRecord();
                         }
                     }
-                } else if (STATE_SELECTED == STATE_RECORD) {
-                    if (record_anim.getCurrentPlayTime() < 1000) {
-                        STATE_SELECTED = STATE_LESSNESS;
-                        DialogUtil.showToast("时间太短了");
-                        progress = 0;
-                        invalidate();
-                        record_anim.cancel();
-                    } else {
-                        STATE_SELECTED = STATE_RECORD_BROWSE;
-                        removeCallbacks(recordRunnable);
-                        captureAnimation(getWidth() / 5, (getWidth() / 5) * 4);
-                        record_anim.cancel();
-                        progress = 0;
-                        invalidate();
-                        if (mCaptureListener != null) {
-                            mCaptureListener.rencodEnd();
-                        }
-                    }
-                    if (btn_outside_radius == btn_after_outside_radius && btn_inside_radius == btn_after_inside_radius) {
-                        startAnimation(btn_after_outside_radius, btn_before_outside_radius, btn_after_inside_radius, btn_before_inside_radius);
-                    } else {
-                        startAnimation(btn_after_outside_radius, btn_before_outside_radius, btn_after_inside_radius, btn_before_inside_radius);
-                    }
+                } else {
+                    //表示没有任何操作
+                    STATE_SELECTED = STATE_UP = STATE_LESSNESS;
                 }
                 break;
         }
         return true;
     }
 
-    public void captureSuccess() {
+    public void showControllerButtons() {
+        STATE_SELECTED = STATE_UP;
         captureAnimation(getWidth() / 5, (getWidth() / 5) * 4);
     }
 
-    //长按事件处理
-    private void postCheckForLongTouch(float x, float y) {
-        longPressRunnable.setPressLocation(x, y);
-        postDelayed(longPressRunnable, 500);
-    }
-
-
     private class LongPressRunnable implements Runnable {
-        private int x, y;
-
-        public void setPressLocation(float x, float y) {
-            this.x = (int) x;
-            this.y = (int) y;
-        }
 
         @Override
         public void run() {
-            startAnimation(btn_before_outside_radius, btn_after_outside_radius, btn_before_inside_radius, btn_after_inside_radius);
             STATE_SELECTED = STATE_RECORD;
+            startAnimation(btn_before_outside_radius, btn_after_outside_radius, btn_before_inside_radius, btn_after_inside_radius, true);
         }
     }
 
@@ -314,48 +298,45 @@ public class CaptureButton extends View {
             record_anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 @Override
                 public void onAnimationUpdate(ValueAnimator animation) {
-                    if (STATE_SELECTED == STATE_RECORD) {
-                        progress = (float) animation.getAnimatedValue();
-                    }
-                    invalidate();
+                    progress = (float) animation.getAnimatedValue();
+                    postInvalidate();
                 }
             });
             record_anim.addListener(new AnimatorListenerAdapter() {
+
                 @Override
                 public void onAnimationEnd(Animator animation) {
                     super.onAnimationEnd(animation);
-                    if (STATE_SELECTED == STATE_RECORD) {
-                        STATE_SELECTED = STATE_RECORD_BROWSE;
-                        progress = 0;
-                        invalidate();
-                        captureAnimation(getWidth() / 5, (getWidth() / 5) * 4);
-                        if (btn_outside_radius == btn_after_outside_radius && btn_inside_radius == btn_after_inside_radius) {
-                            startAnimation(btn_after_outside_radius, btn_before_outside_radius, btn_after_inside_radius, btn_before_inside_radius);
-                        } else {
-                            startAnimation(btn_after_outside_radius, btn_before_outside_radius, btn_after_inside_radius, btn_before_inside_radius);
-                        }
-                        if (mCaptureListener != null) {
-                            mCaptureListener.rencodEnd();
-                        }
+                    if (record_anim.getCurrentPlayTime() < 1000) {
+                        STATE_SELECTED = STATE_UP = STATE_LESSNESS;
+                    } else {
+                        //表示此时是录制成功的操作,此时的录制时间是ok的
+                        STATE_UP = STATE_RECORD_BROWSE;
                     }
+                    if (mCaptureListener != null) {
+                        mCaptureListener.rencodEnd(STATE_UP != STATE_RECORD_BROWSE);
+                    }
+                    //回归原始的状态
+                    progress = 0;
+                    //这里要调用一个缩小的动画
+                    startAnimation(btn_after_outside_radius, btn_before_outside_radius, btn_after_inside_radius, btn_before_inside_radius, false);
                 }
             });
-            record_anim.setInterpolator(new LinearInterpolator());
+            record_anim.setInterpolator(null);
             //设置最大录制时间为15秒
             record_anim.setDuration(15 * 1000);
             record_anim.start();
         }
     }
 
-    private void startAnimation(float outside_start, float outside_end, float inside_start, float inside_end) {
-
+    private void startAnimation(float outside_start, float outside_end, float inside_start, float inside_end, final boolean start_record) {
         ValueAnimator outside_anim = ValueAnimator.ofFloat(outside_start, outside_end);
         ValueAnimator inside_anim = ValueAnimator.ofFloat(inside_start, inside_end);
         outside_anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 btn_outside_radius = (float) animation.getAnimatedValue();
-                invalidate();
+                postInvalidate();
             }
 
         });
@@ -363,7 +344,8 @@ public class CaptureButton extends View {
             @Override
             public void onAnimationEnd(Animator animation) {
                 super.onAnimationEnd(animation);
-                if (STATE_SELECTED == STATE_RECORD) {
+                //表示要进行视频录制的操作
+                if (start_record && STATE_SELECTED == STATE_RECORD) {
                     postDelayed(recordRunnable, 100);
                 }
             }
@@ -372,7 +354,7 @@ public class CaptureButton extends View {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 btn_inside_radius = (float) animation.getAnimatedValue();
-                invalidate();
+                postInvalidate();
             }
         });
         outside_anim.setDuration(100);
@@ -388,7 +370,7 @@ public class CaptureButton extends View {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 btn_left_X = (float) animation.getAnimatedValue();
-                invalidate();
+                postInvalidate();
             }
 
         });
@@ -396,7 +378,7 @@ public class CaptureButton extends View {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 btn_right_X = (float) animation.getAnimatedValue();
-                invalidate();
+                postInvalidate();
             }
         });
         left_anim.setDuration(200);
@@ -420,10 +402,12 @@ public class CaptureButton extends View {
 
         void record();
 
-        void rencodEnd();
+        void rencodEnd(boolean isShortTime);
 
         void getRecordResult();
 
         void deleteRecordResult();
+
+        void actionRecord();
     }
 }
