@@ -23,7 +23,7 @@ import java.util.List;
 public class CameraUtil {
 
     //视频的帧率设置
-    private static int MAX_FRAME_RATE = 30;
+    private static int MAX_FRAME_RATE = 25;
     private int mFrameRate = MAX_FRAME_RATE;
 
     public int getFrameRate() {
@@ -55,8 +55,8 @@ public class CameraUtil {
     /**
      * 预览的一个摄像头画面大小，默认为1080p，如果不支持的话就用摄像头默认的
      */
-    private int cameraWidth = 1920;
-    private int cameraHeight = 1080;
+    private int cameraWidth = 1280;
+    private int cameraHeight = 720;
 
     public int getCameraWidth() {
         return cameraWidth;
@@ -191,14 +191,6 @@ public class CameraUtil {
             }
         }
         parameters.setPreviewFrameRate(mFrameRate);
-        //人物摄像模式
-        if (isSupported(parameters.getSupportedWhiteBalance(), "auto")) {
-            parameters.setWhiteBalance("auto");
-        }
-        //是否支持视频防抖
-        if ("true".equals(parameters.get("video-stabilization-supported"))) {
-            parameters.set("video-stabilization", "true");
-        }
         //设置图片的大小
         parameters.setPictureSize(cameraWidth, cameraHeight);
         parameters.setPreviewFormat(ImageFormat.NV21);
@@ -307,20 +299,25 @@ public class CameraUtil {
      * 进行拍照
      **/
     public void takePicture(final CameraPictureListener listener) {
-        mCamera.takePicture(null, null, new Camera.PictureCallback() {
+        mCamera.autoFocus(new Camera.AutoFocusCallback() {
             @Override
-            public void onPictureTaken(byte[] data, Camera camera) {
-                Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
-                Matrix matrix = new Matrix();
-                //进行旋转，如果是前置摄像头还需要镜像
-                matrix.postRotate(morientation);
-                if (mCurrentCameraType == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-                    matrix.postScale(-1, 1);
-                }
-                bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-                if (listener != null) {
-                    listener.onPictureBitmap(bitmap);
-                }
+            public void onAutoFocus(boolean success, Camera camera) {
+                mCamera.takePicture(null, null, new Camera.PictureCallback() {
+                    @Override
+                    public void onPictureTaken(byte[] data, Camera camera) {
+                        Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+                        Matrix matrix = new Matrix();
+                        //进行旋转，如果是前置摄像头还需要镜像
+                        matrix.postRotate(morientation);
+                        if (mCurrentCameraType == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+                            matrix.postScale(-1, 1);
+                        }
+                        bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+                        if (listener != null) {
+                            listener.onPictureBitmap(bitmap);
+                        }
+                    }
+                });
             }
         });
     }

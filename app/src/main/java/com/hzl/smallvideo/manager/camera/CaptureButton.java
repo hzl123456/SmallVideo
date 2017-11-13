@@ -13,6 +13,7 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 
+import com.hzl.smallvideo.manager.RecordManager;
 import com.hzl.smallvideo.util.AppUtil;
 
 /**
@@ -54,6 +55,10 @@ public class CaptureButton extends View {
 
     //抬起的时候的操作变化，一种是视频录制成功，一种是图片拍照成功，当然还有一种初始为0的状态
     private int STATE_UP;
+
+    //是否是完整的一个录制流程
+    private boolean isQuitRecord;
+
 
     private float progress = 0;
     private LongPressRunnable longPressRunnable = new LongPressRunnable();
@@ -207,6 +212,10 @@ public class CaptureButton extends View {
                 break;
             case MotionEvent.ACTION_UP:
                 removeCallbacks(longPressRunnable);
+                if (isQuitRecord) {
+                    isQuitRecord = false;
+                    break;
+                }
                 if (STATE_SELECTED == STATE_KEY_DOWN) {
                     if (event.getY() > btn_center_Y - btn_outside_radius &&
                             event.getY() < btn_center_Y + btn_outside_radius &&
@@ -312,6 +321,7 @@ public class CaptureButton extends View {
                     } else {
                         //表示此时是录制成功的操作,此时的录制时间是ok的
                         STATE_UP = STATE_RECORD_BROWSE;
+                        isQuitRecord = true;
                     }
                     if (mCaptureListener != null) {
                         mCaptureListener.rencodEnd(STATE_UP != STATE_RECORD_BROWSE);
@@ -324,7 +334,7 @@ public class CaptureButton extends View {
             });
             record_anim.setInterpolator(null);
             //设置最大录制时间为15秒
-            record_anim.setDuration(15 * 1000);
+            record_anim.setDuration(RecordManager.RECORD_TIME * 1000);
             record_anim.start();
         }
     }

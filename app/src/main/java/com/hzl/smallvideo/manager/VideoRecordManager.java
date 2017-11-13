@@ -20,6 +20,7 @@ import com.libyuv.util.YuvUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
+import java.util.Queue;
 
 import static android.content.Context.SENSOR_SERVICE;
 
@@ -34,14 +35,15 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
 
     private CameraSurfaceView mCameraSurfaceView;
     private CameraUtil mCameraUtil;
+    private int count; //编码的总的帧数，最后要根据这个去计算平均的fps
 
     //输出的宽高
     private int outWidth = 720;
     private int outHeight = 1280;
 
     private volatile boolean isRunning;
-    private volatile LinkedList<byte[]> yuvList;
     private volatile boolean isFirstOnDrawFrame = true;
+    private volatile Queue<byte[]> yuvList;
     private boolean isPause;
     private byte[] yuvData;
     private Thread yuvThread;
@@ -118,7 +120,6 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
         }
         isRunning = true;
         isPause = false;
-
         count = 0;
     }
 
@@ -150,26 +151,27 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
         if (!isRunning || isPause) { //如果是没有开启录制和暂停就进行返回
             return;
         }
-        yuvList.addLast(data);
+        yuvList.offer(data);
         if (yuvThread == null) {
             yuvThread = new Thread(new Runnable() {
                 @Override
                 public void run() {
                     while (true) {
                         if (yuvList.size() > 0) {
-                            final byte[] data = yuvList.getFirst();
+                            final byte[] data = yuvList.poll();
                             if (data != null) {
                                 final int morientation = mCameraUtil.getMorientation();
                                 YuvUtil.compressYUV(data, mCameraUtil.getCameraWidth(), mCameraUtil.getCameraHeight(), yuvData, outHeight, outWidth, 0, morientation, morientation == 270 ? mCameraUtil.isMirror() : false);
                                 FFmpegUtil.pushDataToH264File(yuvData);
                                 count++;
                             }
-                            yuvList.removeFirst();
                         } else if (!isRunning && !isPause) {
+                            Log.i("dddd->count", count + "");
+                            Log.i("dddd->time", ((float) count / mCameraUtil.getFrameRate()) + "");
+                            Log.i("dddd->fps:", (float) count / RecordManager.RECORD_TIME + "");
                             FFmpegUtil.getH264File();
-                            Log.i("dddd->", count + "_" + ((float) count / mCameraUtil.getFrameRate()));
                             if (listener != null) {
-                                listener.videoComplete();
+                                listener.videoComplete((float) count / RecordManager.RECORD_TIME);
                             }
                             break;
                         }
@@ -181,8 +183,6 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
             yuvThread.start();
         }
     }
-
-    private int count;
 
     @Override
     public void onSensorChanged(SensorEvent event) {

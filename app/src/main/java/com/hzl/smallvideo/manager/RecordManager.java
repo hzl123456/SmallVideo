@@ -20,12 +20,18 @@ import java.io.IOException;
 @SuppressWarnings("deprecation")
 public class RecordManager extends RecordListener {
 
+    //小视频录制的时长为15秒
+    public static final int RECORD_TIME = 15;
+
     private VideoRecordManager mVideoRecordManager;
     private AudioRecordManager mAudioRecordManager;
     private RecordFinishListener mRecordFinishListener;
 
     private boolean isVideoComplete;
     private boolean isAudioComplete;
+
+    //最后视频的平均的fps的值
+    private float fps;
 
     public RecordManager(CameraSurfaceView mSurfaceView) {
         mVideoRecordManager = new VideoRecordManager(mSurfaceView);
@@ -40,7 +46,8 @@ public class RecordManager extends RecordListener {
     }
 
     @Override
-    public void videoComplete() {
+    public void videoComplete(float fps) {
+        this.fps = fps;
         isVideoComplete = true;
         getMP4File();
     }
@@ -64,7 +71,7 @@ public class RecordManager extends RecordListener {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    FFmpegUtil.getMP4File(mVideoRecordManager.getFilePath(), mAudioRecordManager.getFilePath(), filePath);
+                    FFmpegUtil.getMP4File(mVideoRecordManager.getFilePath(), mAudioRecordManager.getFilePath(), filePath, RecordManager.this.fps);
                     //完成之后删除h264和aac
                     new File(mVideoRecordManager.getFilePath()).delete();
                     new File(mAudioRecordManager.getFilePath()).delete();

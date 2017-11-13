@@ -96,7 +96,7 @@ Java_com_hzl_smallvideo_util_FFmpegUtil_initH264File(JNIEnv *env, jclass type, j
     //帧率的基本单位，我们用分数来表示，帧率通过外面传进来
     pCodecCtx->time_base = (AVRational) {1, rate};
     //编码的线程
-    pCodecCtx->thread_count = 12;
+    pCodecCtx->thread_count = 15;
     //两个非B帧之间允许出现多少个B帧数
     pCodecCtx->max_b_frames = 0;
     pCodecCtx->qmin = 0;
@@ -270,11 +270,14 @@ Java_com_hzl_smallvideo_util_FFmpegUtil_getAACFile(JNIEnv *env, jclass type) {
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_hzl_smallvideo_util_FFmpegUtil_getMP4File(JNIEnv *env, jclass type, jstring h264FilePath_,
-                                                   jstring aacFilePath_, jstring mp4FilePath_) {
+                                                   jstring aacFilePath_, jstring mp4FilePath_,
+                                                   jfloat fps) {
     //文件路径信息
     const char *in_filename_v = env->GetStringUTFChars(h264FilePath_, 0);
     const char *in_filename_a = env->GetStringUTFChars(aacFilePath_, 0);
     const char *out_filename = env->GetStringUTFChars(mp4FilePath_, 0);
+    //输出的视频的平均的fps
+    //AVRational file_time_base = (AVRational) {1, fps};
 
     AVOutputFormat *ofmt = NULL;
     //Input AVFormatContext and Output AVFormatContext  

@@ -12,6 +12,7 @@ import com.hzl.smallvideo.util.FFmpegUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
+import java.util.Queue;
 
 /**
  * 作者：请叫我百米冲刺 on 2017/10/23 上午9:07
@@ -34,9 +35,9 @@ public class AudioRecordManager implements MangerApi {
     private int bufferSize;
 
     private volatile boolean isRunning;
-    private volatile LinkedList<byte[]> pcmList;
     private volatile boolean isFirstOnDrawFrame = true;
     private volatile boolean isPause;
+    private volatile Queue<byte[]> pcmList;
     private Thread pcmThread;
 
 
@@ -77,18 +78,17 @@ public class AudioRecordManager implements MangerApi {
                 }
                 if (bytesRecord != 0 && bytesRecord != -1) {
                     //获取每一帧的pcm数据,这边需要将pcm转化成aar文件
-                    pcmList.addLast(tempBuffer);
+                    pcmList.offer(tempBuffer);
                     if (pcmThread == null) {
                         pcmThread = new Thread(new Runnable() {
                             @Override
                             public void run() {
                                 while (true) {
                                     if (pcmList.size() > 0) {
-                                        final byte[] data = pcmList.getFirst();
+                                        final byte[] data = pcmList.poll();
                                         if (data != null) {
                                             FFmpegUtil.pushDataToAACFile(data);
                                         }
-                                        pcmList.removeFirst();
                                     } else if (!isRunning && !isPause) {
                                         FFmpegUtil.getAACFile();
                                         //进行回调通知

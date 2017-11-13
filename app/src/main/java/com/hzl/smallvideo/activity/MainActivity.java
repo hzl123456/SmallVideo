@@ -132,12 +132,14 @@ public class MainActivity extends Activity implements View.OnClickListener {
             @Override
             public void getRecordResult() { //需要录制
                 DialogUtil.showToast("视频保存成功");
+                mVideoView.stopPlayback();
                 mVideoView.setVisibility(View.GONE);
             }
 
             @Override
             public void deleteRecordResult() {//删除录制
                 new File(filePath).delete();
+                mVideoView.stopPlayback();
                 mVideoView.setVisibility(View.GONE);
             }
 
