@@ -1,12 +1,13 @@
 #ifndef SMALLVIDEO_FFMPEG_ENCODE_AAC_H
 #define SMALLVIDEO_FFMPEG_ENCODE_AAC_H
 
-extern "C" {
-#include <libavutil/opt.h>
-#include <libavcodec/avcodec.h>
-#include <libavformat/avformat.h>
-};
-
+extern "C"
+{
+#include "include/libavcodec/avcodec.h"
+#include "include/libavformat/avformat.h"
+#include "include/libavcodec/avcodec.h"
+#include "include/libavutil/opt.h"
+}
 class FFmpegEncodeAAC {
 
 public:

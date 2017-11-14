@@ -60,7 +60,7 @@ public class RecordManager extends RecordListener {
 
     public synchronized void getMP4File() {
         if (isVideoComplete && isAudioComplete) {
-            final String filePath = Environment.getExternalStorageDirectory().getPath() + File.separator + "ffmpeg" + System.currentTimeMillis() + ".mp4";
+            final String filePath = Environment.getExternalStorageDirectory().getPath() + File.separator + System.currentTimeMillis() + ".mp4";
             //创建pcm文件
             final File file = new File(filePath);
             try {

@@ -1,5 +1,9 @@
 #include "ffmpeg_config.h"
 
+extern "C" {
+#include "cmd/ffmpeg.h"
+}
+
 void FFmpegConfig::flush_encoder(AVFormatContext *fmt_ctx, unsigned int stream_index) {
     int ret;
     int got_frame;
@@ -25,4 +29,8 @@ void FFmpegConfig::flush_encoder(AVFormatContext *fmt_ctx, unsigned int stream_i
         if (ret < 0)
             break;
     }
+}
+
+int FFmpegConfig::ffmpeg_cmd_run(int argc, char **argv) {
+    return execute(argc, argv);
 }
