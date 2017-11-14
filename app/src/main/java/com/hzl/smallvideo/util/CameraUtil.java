@@ -23,7 +23,7 @@ import java.util.List;
 public class CameraUtil {
 
     //视频的帧率设置
-    private static int MAX_FRAME_RATE = 25;
+    private static int MAX_FRAME_RATE = 30;
     private int mFrameRate = MAX_FRAME_RATE;
 
     public int getFrameRate() {
@@ -190,7 +190,8 @@ public class CameraUtil {
                 }
             }
         }
-        parameters.setPreviewFrameRate(mFrameRate);
+        //设置最大和最小的fps，如果camera的性能达不到的话，返回的fps还是会低于mFrameRate的
+        parameters.setPreviewFpsRange(mFrameRate * 1000, mFrameRate * 1000);
         //设置图片的大小
         parameters.setPictureSize(cameraWidth, cameraHeight);
         parameters.setPreviewFormat(ImageFormat.NV21);

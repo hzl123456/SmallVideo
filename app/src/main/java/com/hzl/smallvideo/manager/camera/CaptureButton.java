@@ -59,7 +59,6 @@ public class CaptureButton extends View {
     //是否是完整的一个录制流程
     private boolean isQuitRecord;
 
-
     private float progress = 0;
     private LongPressRunnable longPressRunnable = new LongPressRunnable();
     private RecordRunnable recordRunnable = new RecordRunnable();
@@ -248,7 +247,7 @@ public class CaptureButton extends View {
                         STATE_SELECTED = STATE_UP = STATE_LESSNESS;
                         btn_left_X = btn_center_X;
                         btn_right_X = btn_center_X;
-                        postInvalidate();
+                        invalidate();
                     } else if (event.getY() > btn_center_Y - btn_result_radius && //此时是右边那个确认按钮的按下
                             event.getY() < btn_center_Y + btn_result_radius &&
                             event.getX() > btn_right_X - btn_result_radius &&
@@ -265,7 +264,7 @@ public class CaptureButton extends View {
                         STATE_SELECTED = STATE_UP = STATE_LESSNESS;
                         btn_left_X = btn_center_X;
                         btn_right_X = btn_center_X;
-                        postInvalidate();
+                        invalidate();
                     } else if (event.getY() > btn_center_Y - btn_outside_radius &&
                             event.getY() < btn_center_Y + btn_outside_radius &&
                             event.getX() > btn_center_X - btn_outside_radius &&
@@ -308,7 +307,7 @@ public class CaptureButton extends View {
                 @Override
                 public void onAnimationUpdate(ValueAnimator animation) {
                     progress = (float) animation.getAnimatedValue();
-                    postInvalidate();
+                    invalidate();
                 }
             });
             record_anim.addListener(new AnimatorListenerAdapter() {
@@ -321,7 +320,10 @@ public class CaptureButton extends View {
                     } else {
                         //表示此时是录制成功的操作,此时的录制时间是ok的
                         STATE_UP = STATE_RECORD_BROWSE;
-                        isQuitRecord = true;
+                        //给一个50ms的误差
+                        if (Math.abs(record_anim.getCurrentPlayTime() - record_anim.getDuration()) < 50) {
+                            isQuitRecord = true;
+                        }
                     }
                     if (mCaptureListener != null) {
                         mCaptureListener.rencodEnd(STATE_UP != STATE_RECORD_BROWSE);
@@ -346,7 +348,7 @@ public class CaptureButton extends View {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 btn_outside_radius = (float) animation.getAnimatedValue();
-                postInvalidate();
+                invalidate();
             }
 
         });
@@ -364,7 +366,7 @@ public class CaptureButton extends View {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 btn_inside_radius = (float) animation.getAnimatedValue();
-                postInvalidate();
+                invalidate();
             }
         });
         outside_anim.setDuration(100);
@@ -380,7 +382,7 @@ public class CaptureButton extends View {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 btn_left_X = (float) animation.getAnimatedValue();
-                postInvalidate();
+                invalidate();
             }
 
         });
@@ -388,7 +390,7 @@ public class CaptureButton extends View {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 btn_right_X = (float) animation.getAnimatedValue();
-                postInvalidate();
+                invalidate();
             }
         });
         left_anim.setDuration(200);
