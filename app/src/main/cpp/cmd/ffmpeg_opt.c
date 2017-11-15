@@ -1007,9 +1007,10 @@ static int open_input_file(OptionsContext *o, const char *filename)
     assert_avoptions(o->g->format_opts);
 
     /* apply forced codec ids */
-    for (i = 0; i < ic->nb_streams; i++)
-        choose_decoder(o, ic, ic->streams[i]);
-
+    if(ic) {
+        for (i = 0; i < ic->nb_streams; i++)
+            choose_decoder(o, ic, ic->streams[i]);
+    }
     /* Set AVCodecContext options for avformat_find_stream_info */
     opts = setup_find_stream_info_opts(ic, o->g->codec_opts);
     orig_nb_streams = ic->nb_streams;
@@ -3179,11 +3180,11 @@ int ffmpeg_parse_options(int argc, char **argv)
     }
 
     /* create the complex filtergraphs */
-    ret = init_complex_filters();
+   /* ret = init_complex_filters();
     if (ret < 0) {
         av_log(NULL, AV_LOG_FATAL, "Error initializing complex filters.\n");
         goto fail;
-    }
+    }*/
 
     /* open output files */
     ret = open_files(&octx.groups[GROUP_OUTFILE], "output", open_output_file);

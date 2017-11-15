@@ -1,11 +1,14 @@
 package com.hzl.smallvideo.activity;
 
+import android.Manifest;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.hardware.Camera;
 import android.media.MediaPlayer;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.annotation.NonNull;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
@@ -20,11 +23,13 @@ import com.hzl.smallvideo.manager.listener.CameraPictureListener;
 import com.hzl.smallvideo.manager.listener.RecordFinishListener;
 import com.hzl.smallvideo.util.AppUtil;
 import com.hzl.smallvideo.util.DialogUtil;
+import com.hzl.smallvideo.util.PermissionsUtils;
 
 import java.io.File;
 
-@SuppressWarnings("deprecation")
 public class MainActivity extends Activity implements View.OnClickListener {
+
+    private final int REQUEST_CODE_PERMISSIONS = 10;
 
     private CameraSurfaceView mSurfaceView;
     private CaptureButton mBtnStart;
@@ -47,10 +52,32 @@ public class MainActivity extends Activity implements View.OnClickListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         MainApplication.setCurrentActivity(this);
-        setContentView(R.layout.activity_main);
-        initView();
         //设置底部虚拟状态栏为透明，并且可以充满，4.4以上才有
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
+        }
+        //权限申请使用
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            final String[] PERMISSIONS;
+            PERMISSIONS = new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA,Manifest.permission.RECORD_AUDIO};
+            PermissionsUtils.checkAndRequestMorePermissions(this, PERMISSIONS, REQUEST_CODE_PERMISSIONS,
+                    new PermissionsUtils.PermissionRequestSuccessCallBack() {
+                        @Override
+                        public void onHasPermission() {
+                            setContentView(R.layout.activity_main);
+                            initView();
+                        }
+                    });
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (PermissionsUtils.isPermissionRequestSuccess(grantResults)) {
+            setContentView(R.layout.activity_main);
+            initView();
+        }
     }
 
     private void initView() {

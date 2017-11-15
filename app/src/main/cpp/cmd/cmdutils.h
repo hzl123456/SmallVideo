@@ -210,7 +210,7 @@ void show_help_options(const OptionDef *options, const char *msg, int req_flags,
  * Show help for all options with given flags in class and all its
  * children.
  */
-void show_help_children(const AVClass *clazz, int flags);
+void show_help_children(const AVClass *avClass, int flags);
 
 /**
  * Per-fftool specific help handler. Implemented in each
@@ -584,7 +584,7 @@ void *grow_array(void *array, int elem_size, int *size, int new_size);
 
 #define GET_CH_LAYOUT_NAME(ch_layout)\
     char name[16];\
-    snprintf(name, sizeof(name), "0x%" PRIx64, ch_layout);
+    snprintf(name, sizeof(name), "0x%"PRIx64, ch_layout);
 
 #define GET_CH_LAYOUT_DESC(ch_layout)\
     char name[128];\

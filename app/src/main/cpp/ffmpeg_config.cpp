@@ -1,9 +1,5 @@
 #include "ffmpeg_config.h"
 
-extern "C" {
-#include "cmd/ffmpeg.h"
-}
-
 void FFmpegConfig::flush_encoder(AVFormatContext *fmt_ctx, unsigned int stream_index) {
     int ret;
     int got_frame;
