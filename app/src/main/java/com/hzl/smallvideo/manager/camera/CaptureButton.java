@@ -336,7 +336,7 @@ public class CaptureButton extends View {
             });
             record_anim.setInterpolator(null);
             //设置最大录制时间为15秒
-            record_anim.setDuration(RecordManager.RECORD_TIME * 1000);
+            record_anim.setDuration((long) (RecordManager.RECORD_TIME * 1000));
             record_anim.start();
         }
     }

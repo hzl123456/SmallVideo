@@ -35,6 +35,7 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
 
     private CameraSurfaceView mCameraSurfaceView;
     private CameraUtil mCameraUtil;
+    private double time;//编码的时长，最后要根据这个去计算平均的fps，这里的单位用的是秒
     private int count; //编码的总的帧数，最后要根据这个去计算平均的fps
 
     //输出的宽高
@@ -62,6 +63,10 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
         mCameraSurfaceView.setCameraYUVDataListener(this);
 
         mSensorManager = (SensorManager) MainApplication.getInstance().getSystemService(SENSOR_SERVICE);
+    }
+
+    public int getCameraFps() {
+        return mCameraUtil.getFrameRate();
     }
 
     public int changeCamera() {
@@ -121,6 +126,7 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
         isRunning = true;
         isPause = false;
         count = 0;
+        time = System.currentTimeMillis();
     }
 
     @Override
@@ -130,6 +136,7 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
 
     @Override
     public void stopRecord() {
+        time = (System.currentTimeMillis() - time) / 1000;
         isRunning = false;
         isPause = false;
         //表示要重新去操作了
@@ -167,11 +174,11 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
                             }
                         } else if (!isRunning && !isPause) {
                             Log.i("dddd->count", count + "");
-                            Log.i("dddd->time", ((float) count / mCameraUtil.getFrameRate()) + "");
-                            Log.i("dddd->fps:", (float) count / RecordManager.RECORD_TIME + "");
+                            Log.i("dddd->time", time + "");
+                            Log.i("dddd->fps:", (count / time) + "");
                             FFmpegUtil.getH264File();
                             if (listener != null) {
-                                listener.videoComplete((float) count / RecordManager.RECORD_TIME);
+                                listener.videoComplete(count / time);
                             }
                             break;
                         }

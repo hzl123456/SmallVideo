@@ -11,7 +11,6 @@ import com.hzl.smallvideo.manager.listener.RecordListener;
 import com.hzl.smallvideo.util.FFmpegUtil;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * 作者：请叫我百米冲刺 on 2017/11/7 上午11:28
@@ -20,8 +19,8 @@ import java.io.IOException;
 @SuppressWarnings("deprecation")
 public class RecordManager extends RecordListener {
 
-    //小视频录制的时长为15秒
-    public static final int RECORD_TIME = 15;
+    //小视频录制的时长为15秒,给一个500ms的偏移量
+    public static final float RECORD_TIME = 15.5f;
 
     private VideoRecordManager mVideoRecordManager;
     private AudioRecordManager mAudioRecordManager;
@@ -31,7 +30,7 @@ public class RecordManager extends RecordListener {
     private boolean isAudioComplete;
 
     //最后视频的平均的fps的值
-    private float fps;
+    private double fps;
 
     public RecordManager(CameraSurfaceView mSurfaceView) {
         mVideoRecordManager = new VideoRecordManager(mSurfaceView);
@@ -46,7 +45,7 @@ public class RecordManager extends RecordListener {
     }
 
     @Override
-    public void videoComplete(float fps) {
+    public void videoComplete(double fps) {
         this.fps = fps;
         isVideoComplete = true;
         getMP4File();
@@ -61,17 +60,10 @@ public class RecordManager extends RecordListener {
     public synchronized void getMP4File() {
         if (isVideoComplete && isAudioComplete) {
             final String filePath = Environment.getExternalStorageDirectory().getPath() + File.separator + System.currentTimeMillis() + ".mp4";
-            //创建pcm文件
-            final File file = new File(filePath);
-            try {
-                file.createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    FFmpegUtil.getMP4File(mVideoRecordManager.getFilePath(), mAudioRecordManager.getFilePath(), filePath, RecordManager.this.fps);
+                    FFmpegUtil.getMP4File(mVideoRecordManager.getFilePath(), mAudioRecordManager.getFilePath(), filePath, mVideoRecordManager.getCameraFps(), RecordManager.this.fps);
                     //完成之后删除h264和aac
                     new File(mVideoRecordManager.getFilePath()).delete();
                     new File(mAudioRecordManager.getFilePath()).delete();

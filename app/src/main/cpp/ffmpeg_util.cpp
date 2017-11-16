@@ -65,7 +65,7 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_hzl_smallvideo_util_FFmpegUtil_getMP4File(JNIEnv *env, jclass type, jstring h264FilePath_,
                                                    jstring aacFilePath_, jstring mp4FilePath_,
-                                                   jfloat fps) {
+                                                   jint defaultFps, jdouble fps) {
     if (mp4_encoder == NULL) {
         mp4_encoder = new FFmpegEncodeMp4();
     }
@@ -73,6 +73,6 @@ Java_com_hzl_smallvideo_util_FFmpegUtil_getMP4File(JNIEnv *env, jclass type, jst
     const char *in_filename_a = env->GetStringUTFChars(aacFilePath_, 0);
     const char *out_filename = env->GetStringUTFChars(mp4FilePath_, 0);
 
-    mp4_encoder->getMP4File(in_filename_v, in_filename_a, out_filename, fps);
+    mp4_encoder->getMP4File(in_filename_v, in_filename_a, out_filename, defaultFps, fps);
 }
 
