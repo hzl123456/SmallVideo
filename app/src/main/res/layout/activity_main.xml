@@ -28,7 +28,10 @@
         android:visibility="gone" />
 
     <!-- 进行水印添加的控件 -->
-
+    <com.hzl.smallvideo.view.WatermarkView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
 
     <ImageView
         android:id="@+id/btn_camera"

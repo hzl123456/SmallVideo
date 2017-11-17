@@ -143,8 +143,8 @@ void FFmpegEncodeMp4::getMP4File(const char *in_filename_v, const char *in_filen
 
                     //重新赋值，因为fps是保留的两位小数，所以这里要乘以100变成整数
                     if (!hasPlus1) {
-                        out_stream->time_base.num *= fps * 100;
-                        out_stream->time_base.den *= defaultFps * 100;
+                        out_stream->time_base.num *= (fps * 100);
+                        out_stream->time_base.den *= (defaultFps * 100);
                         hasPlus1 = true;
                     }
 
@@ -183,8 +183,8 @@ void FFmpegEncodeMp4::getMP4File(const char *in_filename_v, const char *in_filen
 
                     //重新赋值，因为fps是保留的两位小数，所以这里要乘以100变成整数
                     if (!hasPlus2) {
-                        out_stream->time_base.num *= fps * 100;
-                        out_stream->time_base.den *= defaultFps * 100;
+                        out_stream->time_base.num *= (fps * 100);
+                        out_stream->time_base.den *= (defaultFps * 100);
                         hasPlus2 = true;
                     }
 

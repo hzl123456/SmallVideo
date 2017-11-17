@@ -5,7 +5,6 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Environment;
-import android.util.Log;
 
 import com.hzl.smallvideo.application.MainApplication;
 import com.hzl.smallvideo.manager.api.MangerApi;
@@ -35,8 +34,10 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
 
     private CameraSurfaceView mCameraSurfaceView;
     private CameraUtil mCameraUtil;
+    private long startTime;//开始的时间
     private double time;//编码的时长，最后要根据这个去计算平均的fps，这里的单位用的是秒
     private int count; //编码的总的帧数，最后要根据这个去计算平均的fps
+
 
     //输出的宽高
     private int outWidth = 720;
@@ -126,7 +127,7 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
         isRunning = true;
         isPause = false;
         count = 0;
-        time = System.currentTimeMillis();
+        startTime = System.currentTimeMillis();
     }
 
     @Override
@@ -136,7 +137,7 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
 
     @Override
     public void stopRecord() {
-        time = (System.currentTimeMillis() - time) / 1000;
+        time = (System.currentTimeMillis() - startTime) / (double) 1000;
         isRunning = false;
         isPause = false;
         //表示要重新去操作了
@@ -173,9 +174,6 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
                                 count++;
                             }
                         } else if (!isRunning && !isPause) {
-                            Log.i("dddd->count", count + "");
-                            Log.i("dddd->time", time + "");
-                            Log.i("dddd->fps:", (count / time) + "");
                             FFmpegUtil.getH264File();
                             if (listener != null) {
                                 listener.videoComplete(count / time);
