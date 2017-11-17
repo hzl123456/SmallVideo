@@ -38,6 +38,9 @@ public class CameraSurfaceView extends FrameLayout implements CameraSurfaceApi, 
 
     private CameraYUVDataListener listener;
 
+    private double mTargetAspect = -1.0;
+
+
     public void setCameraYUVDataListener(CameraYUVDataListener listener) {
         this.listener = listener;
     }
@@ -109,6 +112,9 @@ public class CameraSurfaceView extends FrameLayout implements CameraSurfaceApi, 
             @Override
             public void run() {
                 mCameraUtil.handleCameraStartPreview(mSurfaceView.getHolder(), CameraSurfaceView.this);
+                //这里可以获取真正的预览的分辨率，在这里要进行屏幕的适配，主要适配非16:9的屏幕
+                mTargetAspect = ((float) mCameraUtil.getCameraHeight()) / mCameraUtil.getCameraWidth();
+                CameraSurfaceView.this.measure(-1, -1);
             }
         });
     }
@@ -167,6 +173,36 @@ public class CameraSurfaceView extends FrameLayout implements CameraSurfaceApi, 
             animSet.start();
         }
         mCameraUtil.startAutoFocus();
+    }
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        if (mTargetAspect > 0) {
+            int initialWidth = MeasureSpec.getSize(widthMeasureSpec);
+            int initialHeight = MeasureSpec.getSize(heightMeasureSpec);
+
+            int horizPadding = getPaddingLeft() + getPaddingRight();
+            int vertPadding = getPaddingTop() + getPaddingBottom();
+            initialWidth -= horizPadding;
+            initialHeight -= vertPadding;
+
+            double viewAspectRatio = (double) initialWidth / initialHeight;
+            double aspectDiff = mTargetAspect / viewAspectRatio - 1;
+
+            if (Math.abs(aspectDiff) < 0.01) {
+            } else {
+                if (aspectDiff > 0) {
+                    initialHeight = (int) (initialWidth / mTargetAspect);
+                } else {
+                    initialWidth = (int) (initialHeight * mTargetAspect);
+                }
+                initialWidth += horizPadding;
+                initialHeight += vertPadding;
+                widthMeasureSpec = MeasureSpec.makeMeasureSpec(initialWidth, MeasureSpec.EXACTLY);
+                heightMeasureSpec = MeasureSpec.makeMeasureSpec(initialHeight, MeasureSpec.EXACTLY);
+            }
+        }
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
 
 

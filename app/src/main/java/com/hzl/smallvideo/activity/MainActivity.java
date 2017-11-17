@@ -189,6 +189,13 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 mp.start();
             }
         });
+        mVideoView.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+            @Override
+            public boolean onError(MediaPlayer mp, int what, int extra) {
+                //不做任何处理
+                return true;
+            }
+        });
 
     }
 

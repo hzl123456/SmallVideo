@@ -100,8 +100,6 @@ public class AudioRecordManager implements MangerApi {
                                 }
                             }
                         });
-                    }
-                    if (!pcmThread.isAlive()) {
                         pcmThread.start();
                     }
                 } else {

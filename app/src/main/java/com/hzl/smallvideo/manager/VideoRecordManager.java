@@ -183,8 +183,6 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
                     }
                 }
             });
-        }
-        if (!yuvThread.isAlive()) {
             yuvThread.start();
         }
     }
