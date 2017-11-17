@@ -26,7 +26,3 @@ void FFmpegConfig::flush_encoder(AVFormatContext *fmt_ctx, unsigned int stream_i
             break;
     }
 }
-
-int FFmpegConfig::ffmpeg_cmd_run(int argc, char **argv) {
-    return execute(argc, argv);
-}

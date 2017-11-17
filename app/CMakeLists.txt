@@ -17,10 +17,6 @@ add_library( # Sets the name of the library.
              SHARED
 
              # Provides a relative path to your source file(s).
-             src/main/cpp/cmd/cmdutils.c
-             src/main/cpp/cmd/ffmpeg.c
-             src/main/cpp/cmd/ffmpeg_filter.c
-             src/main/cpp/cmd/ffmpeg_opt.c
              src/main/cpp/ffmpeg_encode_h264.cpp
              src/main/cpp/ffmpeg_encode_aac.cpp
              src/main/cpp/ffmpeg_encode_mp4.cpp
@@ -226,7 +222,7 @@ set_target_properties(
     )
 endif(${ANDROID_ABI} STREQUAL "x86_64")
 
-include_directories(${CMAKE_SOURCE_DIR}/ffmpeg-3.2.5/)
+include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/include)
 
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by

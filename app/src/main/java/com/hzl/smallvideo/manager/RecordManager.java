@@ -11,6 +11,8 @@ import com.hzl.smallvideo.manager.listener.RecordListener;
 import com.hzl.smallvideo.util.FFmpegUtil;
 
 import java.io.File;
+import java.io.IOException;
+import java.math.BigDecimal;
 
 /**
  * 作者：请叫我百米冲刺 on 2017/11/7 上午11:28
@@ -19,7 +21,7 @@ import java.io.File;
 @SuppressWarnings("deprecation")
 public class RecordManager extends RecordListener {
 
-    //小视频录制的时长为15秒,给一个500ms的偏移量
+    //小视频录制的时长为15秒,给一个100ms的偏移量
     public static final float RECORD_TIME = 15.5f;
 
     private VideoRecordManager mVideoRecordManager;
@@ -46,7 +48,8 @@ public class RecordManager extends RecordListener {
 
     @Override
     public void videoComplete(double fps) {
-        this.fps = fps;
+        //保留两位小数
+        this.fps = BigDecimal.valueOf(fps).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
         isVideoComplete = true;
         getMP4File();
     }
@@ -60,6 +63,12 @@ public class RecordManager extends RecordListener {
     public synchronized void getMP4File() {
         if (isVideoComplete && isAudioComplete) {
             final String filePath = Environment.getExternalStorageDirectory().getPath() + File.separator + System.currentTimeMillis() + ".mp4";
+            //创建文件
+            try {
+                new File(filePath).createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             new Thread(new Runnable() {
                 @Override
                 public void run() {

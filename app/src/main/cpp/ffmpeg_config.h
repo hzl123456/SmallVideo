@@ -3,7 +3,6 @@
 
 extern "C"
 {
-#include "cmd/ffmpeg.h"
 #include "libavcodec/avcodec.h"
 #include "libavformat/avformat.h"
 #include "libavcodec/avcodec.h"
@@ -13,8 +12,6 @@ extern "C"
 class FFmpegConfig {
 public:
     static void flush_encoder(AVFormatContext *fmt_ctx, unsigned int stream_index);
-    static int ffmpeg_cmd_run(int argc, char **argv);
-
 };
 
 #endif //SMALLVIDEO_FFMPEG_CONFIG_H
