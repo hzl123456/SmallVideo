@@ -76,3 +76,17 @@ Java_com_hzl_smallvideo_util_FFmpegUtil_getMP4File(JNIEnv *env, jclass type, jst
     mp4_encoder->getMP4File(in_filename_v, in_filename_a, out_filename, defaultFps, fps);
 }
 
+//-----------------------------这边是添加水印需要---------------------------------
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_hzl_smallvideo_util_FFmpegUtil_addWatermark(JNIEnv *env, jclass type, jstring inputPath_,
+                                                     jstring outputPath_, jstring watermarkPath_,
+                                                     jint left, jint top, jint width, jint height) {
+    const char *inputPath = env->GetStringUTFChars(inputPath_, 0);
+    const char *outputPath = env->GetStringUTFChars(outputPath_, 0);
+    const char *watermarkPath = env->GetStringUTFChars(watermarkPath_, 0);
+
+
+
+
+}

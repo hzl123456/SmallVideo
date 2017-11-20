@@ -1,4 +1,4 @@
-package com.hzl.smallvideo.manager.listener;
+package com.hzl.smallvideo.listener;
 
 /**
  * 作者：请叫我百米冲刺 on 2017/11/13 上午9:44

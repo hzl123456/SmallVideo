@@ -9,7 +9,7 @@ import android.view.Surface;
 import android.view.SurfaceHolder;
 
 import com.hzl.smallvideo.application.MainApplication;
-import com.hzl.smallvideo.manager.listener.CameraPictureListener;
+import com.hzl.smallvideo.listener.CameraPictureListener;
 
 import java.io.IOException;
 import java.util.Collections;

@@ -19,6 +19,8 @@ import java.util.Locale;
 
 public class MainApplication extends Application {
 
+    private static final String TAG = "SmallVideo";
+
     private static MainApplication INSTANCE;
 
     private static Activity CURRENT_ACTIVITY;
@@ -80,5 +82,4 @@ public class MainApplication extends Application {
             }
         });
     }
-
 }

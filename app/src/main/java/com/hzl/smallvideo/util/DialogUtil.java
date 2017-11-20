@@ -1,6 +1,5 @@
 package com.hzl.smallvideo.util;
 
-import android.app.ProgressDialog;
 import android.os.Handler;
 import android.os.Looper;
 import android.widget.Toast;
@@ -18,26 +17,16 @@ public class DialogUtil {
 
     private static Toast toast;
 
-    private static ProgressDialog dialog;
-
     /**
      * 显示loading的dialog
      **/
     public static void showLoadingDialog(String text) {
-        if (dialog == null) {
-            dialog = new ProgressDialog(MainApplication.getCurrentActivity());
-        }
-        dialog.setTitle(text);
-        dialog.show();
     }
 
     /**
      * 取消loading的dialog
      **/
     public static void disMissLoadingDialog() {
-        if (dialog != null && dialog.isShowing()) {
-            dialog.dismiss();
-        }
     }
 
     /**

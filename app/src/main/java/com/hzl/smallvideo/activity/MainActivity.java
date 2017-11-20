@@ -16,14 +16,16 @@ import android.widget.VideoView;
 
 import com.hzl.smallvideo.R;
 import com.hzl.smallvideo.application.MainApplication;
+import com.hzl.smallvideo.listener.CameraPictureListener;
+import com.hzl.smallvideo.listener.RecordFinishListener;
+import com.hzl.smallvideo.listener.WatermarkCallbackListener;
 import com.hzl.smallvideo.manager.RecordManager;
 import com.hzl.smallvideo.manager.camera.CameraSurfaceView;
 import com.hzl.smallvideo.manager.camera.CaptureButton;
-import com.hzl.smallvideo.manager.listener.CameraPictureListener;
-import com.hzl.smallvideo.manager.listener.RecordFinishListener;
 import com.hzl.smallvideo.util.AppUtil;
 import com.hzl.smallvideo.util.DialogUtil;
 import com.hzl.smallvideo.util.PermissionsUtils;
+import com.hzl.smallvideo.view.WatermarkView;
 
 import java.io.File;
 
@@ -33,6 +35,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     private CameraSurfaceView mSurfaceView;
     private CaptureButton mBtnStart;
+    private WatermarkView mWatermark;
     private VideoView mVideoView;
     private ImageView mBtnCamera;
     private ImageView mBtnLight;
@@ -87,6 +90,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         mBtnCamera = (ImageView) findViewById(R.id.btn_camera);
         mBtnLight = (ImageView) findViewById(R.id.btn_light);
         ivImage = (ImageView) findViewById(R.id.iv_image);
+        mWatermark = (WatermarkView) findViewById(R.id.watermark);
 
         mBtnCamera.setOnClickListener(this);
         mBtnLight.setOnClickListener(this);
@@ -110,6 +114,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         //显示到界面上去，然后刷新camera
                         mRecordManager.onStop();
                         mRecordManager.onResume();
+                        //隐藏顶部的按钮
+                        mBtnCamera.setVisibility(View.GONE);
+                        mBtnLight.setVisibility(View.GONE);
                     }
                 });
             }
@@ -118,6 +125,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
             public void cancel() { //拍照取消
                 MainActivity.this.bitmap = null;
                 ivImage.setVisibility(View.GONE);
+                //显示顶部的按钮
+                mBtnCamera.setVisibility(View.VISIBLE);
+                mBtnLight.setVisibility(View.VISIBLE);
             }
 
             @Override
@@ -126,6 +136,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 AppUtil.saveBitmapToFile(MainActivity.this.bitmap, filePath);
                 DialogUtil.showToast("图片保存成功");
                 ivImage.setVisibility(View.GONE);
+                //显示顶部的按钮
+                mBtnCamera.setVisibility(View.VISIBLE);
+                mBtnLight.setVisibility(View.VISIBLE);
             }
 
             @Override
@@ -151,6 +164,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
                             mBtnStart.showControllerButtons();
                             //进行小视频的循环播放
                             startVideo(filePath);
+                            //隐藏顶部的按钮
+                            mBtnCamera.setVisibility(View.GONE);
+                            mBtnLight.setVisibility(View.GONE);
                         }
                     }
                 });
@@ -161,6 +177,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 DialogUtil.showToast("视频保存成功");
                 mVideoView.stopPlayback();
                 mVideoView.setVisibility(View.GONE);
+                //显示顶部的按钮
+                mBtnCamera.setVisibility(View.VISIBLE);
+                mBtnLight.setVisibility(View.VISIBLE);
             }
 
             @Override
@@ -168,16 +187,35 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 new File(filePath).delete();
                 mVideoView.stopPlayback();
                 mVideoView.setVisibility(View.GONE);
+                //显示顶部的按钮
+                mBtnCamera.setVisibility(View.VISIBLE);
+                mBtnLight.setVisibility(View.VISIBLE);
             }
 
             @Override
             public void actionRecord() { //对视频和图片进行操作，主要是添加水印
+                //mWatermark.setVisibility(View.VISIBLE);
                 DialogUtil.showToast("该功能暂未开放");
+            }
+        });
+
+        mWatermark.setWatermarkCallbackListener(new WatermarkCallbackListener() {
+            @Override
+            public void onResult(Bitmap bitmap) {
+                mWatermark.setVisibility(View.GONE);
+            }
+
+            @Override
+            public void onCancel() {
+                mWatermark.setVisibility(View.GONE);
             }
         });
     }
 
     public void startVideo(String videoPath) {
+        if (mVideoView.isPlaying()) {
+            mVideoView.stopPlayback();
+        }
         mVideoView.setVisibility(View.VISIBLE);
         mVideoView.setZOrderMediaOverlay(true);
         mVideoView.setVideoPath("file://" + videoPath);

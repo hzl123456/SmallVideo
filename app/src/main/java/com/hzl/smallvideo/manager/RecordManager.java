@@ -5,9 +5,9 @@ import android.os.Handler;
 import android.os.Looper;
 
 import com.hzl.smallvideo.manager.camera.CameraSurfaceView;
-import com.hzl.smallvideo.manager.listener.CameraPictureListener;
-import com.hzl.smallvideo.manager.listener.RecordFinishListener;
-import com.hzl.smallvideo.manager.listener.RecordListener;
+import com.hzl.smallvideo.listener.CameraPictureListener;
+import com.hzl.smallvideo.listener.RecordFinishListener;
+import com.hzl.smallvideo.listener.RecordListener;
 import com.hzl.smallvideo.util.FFmpegUtil;
 
 import java.io.File;

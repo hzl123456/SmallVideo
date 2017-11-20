@@ -1,6 +1,6 @@
 package com.hzl.smallvideo.manager.api;
 
-import com.hzl.smallvideo.manager.listener.RecordListener;
+import com.hzl.smallvideo.listener.RecordListener;
 
 /**
  * 作者：请叫我百米冲刺 on 2017/11/7 上午10:56

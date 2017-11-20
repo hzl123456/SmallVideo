@@ -1,6 +1,6 @@
 package com.hzl.smallvideo.manager.api;
 
-import com.hzl.smallvideo.manager.listener.CameraPictureListener;
+import com.hzl.smallvideo.listener.CameraPictureListener;
 
 /**
  * 作者：请叫我百米冲刺 on 2017/11/7 上午10:38

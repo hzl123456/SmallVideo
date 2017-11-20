@@ -6,7 +6,7 @@ import android.media.MediaRecorder;
 import android.os.Environment;
 
 import com.hzl.smallvideo.manager.api.MangerApi;
-import com.hzl.smallvideo.manager.listener.RecordListener;
+import com.hzl.smallvideo.listener.RecordListener;
 import com.hzl.smallvideo.util.FFmpegUtil;
 
 import java.io.File;

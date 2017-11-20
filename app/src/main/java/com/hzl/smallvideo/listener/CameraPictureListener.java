@@ -1,4 +1,4 @@
-package com.hzl.smallvideo.manager.listener;
+package com.hzl.smallvideo.listener;
 
 import android.graphics.Bitmap;
 

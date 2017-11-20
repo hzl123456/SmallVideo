@@ -29,6 +29,7 @@
 
     <!-- 进行水印添加的控件 -->
     <com.hzl.smallvideo.view.WatermarkView
+        android:id="@+id/watermark"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone" />

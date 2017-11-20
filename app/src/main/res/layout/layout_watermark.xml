@@ -5,6 +5,7 @@
     android:orientation="vertical">
 
     <RelativeLayout
+        android:id="@+id/layout_controll"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
@@ -19,6 +20,7 @@
             android:textStyle="bold" />
 
         <TextView
+            android:id="@+id/tv_ok"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentRight="true"
@@ -28,15 +30,4 @@
             android:textSize="16sp"
             android:textStyle="bold" />
     </RelativeLayout>
-
-    <EditText
-        android:id="@+id/et_input"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@android:color/transparent"
-        android:padding="10dp"
-        android:textColor="#ffffff"
-        android:textSize="16dp" />
-
-
 </LinearLayout>
