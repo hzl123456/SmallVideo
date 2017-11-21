@@ -40,5 +40,4 @@ android {
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     compile project(':libyuv')
-    compile 'com.android.support:appcompat-v7:25.+'
 }
