@@ -7,6 +7,7 @@ import android.os.Environment;
 
 import com.hzl.smallvideo.listener.RecordListener;
 import com.hzl.smallvideo.manager.api.MangerApi;
+import com.hzl.smallvideo.util.AppUtil;
 import com.hzl.smallvideo.util.FFmpegUtil;
 
 import java.io.File;
@@ -87,7 +88,7 @@ public class AudioRecordManager implements MangerApi {
                                 try {
                                     while (true) {
                                         if (pcmList.size() > 0) {
-                                            final byte[] data = pcmList.take();
+                                            byte[] data = pcmList.take();
                                             if (data != null) {
                                                 FFmpegUtil.pushDataToAACFile(data);
                                             }
@@ -157,7 +158,7 @@ public class AudioRecordManager implements MangerApi {
                 }
                 file.createNewFile();
                 //实例化生成aac的操作
-                FFmpegUtil.initAACFile(aacPath);
+                FFmpegUtil.initAACFile(aacPath, AppUtil.getCpuCores());
             } catch (IOException e) {
                 e.printStackTrace();
             }

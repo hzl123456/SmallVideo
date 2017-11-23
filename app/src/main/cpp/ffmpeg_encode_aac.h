@@ -11,7 +11,7 @@ extern "C"
 class FFmpegEncodeAAC {
 
 public:
-    void initAACFile(const char *filePath);
+    void initAACFile(const char *filePath,int coreCount);
 
     void pushDataToAACFile(uint8_t *src_);
 

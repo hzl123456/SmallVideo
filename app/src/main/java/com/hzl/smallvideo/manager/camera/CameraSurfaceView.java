@@ -83,7 +83,6 @@ public class CameraSurfaceView extends FrameLayout implements CameraSurfaceApi, 
         if (listener != null) {
             listener.onCallback(data);
         }
-
     }
 
     @Override

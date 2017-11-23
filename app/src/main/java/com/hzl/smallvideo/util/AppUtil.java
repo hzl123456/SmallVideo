@@ -9,6 +9,7 @@ import android.view.WindowManager;
 import com.hzl.smallvideo.application.MainApplication;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -22,6 +23,22 @@ public class AppUtil {
 
     private static int screenWidth;
     private static int screenHeight;
+
+    private static final FileFilter CPU_FILTER = new FileFilter() {
+        @Override
+        public boolean accept(File pathname) {
+            String path = pathname.getName();
+            if (path.startsWith("cpu")) {
+                for (int i = 3; i < path.length(); i++) {
+                    if (path.charAt(i) < '0' || path.charAt(i) > '9') {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+    };
 
     public static int getScreenWidth() {
         if (screenWidth == 0) {
@@ -62,6 +79,21 @@ public class AppUtil {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * 获取设备的cpu核心数
+     **/
+    public static int getCpuCores() {
+        int cores = 4;
+        try {
+            cores = new File("/sys/devices/system/cpu/").listFiles(CPU_FILTER).length;
+        } catch (SecurityException e) {
+            e.printStackTrace();
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
+        return cores;
     }
 
 

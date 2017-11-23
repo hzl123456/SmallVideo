@@ -23,7 +23,7 @@ import com.hzl.smallvideo.manager.RecordManager;
 import com.hzl.smallvideo.manager.camera.CameraSurfaceView;
 import com.hzl.smallvideo.manager.camera.CaptureButton;
 import com.hzl.smallvideo.util.AppUtil;
-import com.hzl.smallvideo.util.DialogUtil;
+import com.hzl.smallvideo.util.CommonUtil;
 import com.hzl.smallvideo.util.PermissionsUtils;
 import com.hzl.smallvideo.view.WatermarkView;
 
@@ -134,7 +134,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
             public void determine() { //拍照确定
                 final String filePath = Environment.getExternalStorageDirectory().getPath() + File.separator + System.currentTimeMillis() + ".png";
                 AppUtil.saveBitmapToFile(MainActivity.this.bitmap, filePath);
-                DialogUtil.showToast("图片保存成功");
+                CommonUtil.showToast("图片保存成功");
                 ivImage.setVisibility(View.GONE);
                 //显示顶部的按钮
                 mBtnCamera.setVisibility(View.VISIBLE);
@@ -156,7 +156,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         if (isShortTime) {
                             //删除录制的小视频
                             new File(filePath).delete();
-                            DialogUtil.showToast("录制时间太短");
+                            CommonUtil.showToast("录制时间太短");
                         } else {
                             //得到合成的mp4的文件路径
                             MainActivity.this.filePath = filePath;
@@ -174,7 +174,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
             @Override
             public void getRecordResult() { //需要录制
-                DialogUtil.showToast("视频保存成功");
+                CommonUtil.showToast("视频保存成功");
                 mVideoView.stopPlayback();
                 mVideoView.setVisibility(View.GONE);
                 //显示顶部的按钮
@@ -195,7 +195,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
             @Override
             public void actionRecord() { //对视频和图片进行操作，主要是添加水印
                 //mWatermark.setVisibility(View.VISIBLE);
-                DialogUtil.showToast("该功能暂未开放");
+                CommonUtil.showToast("该功能暂未开放");
             }
         });
 

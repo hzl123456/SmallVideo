@@ -18,14 +18,14 @@ public class FFmpegUtil {
     }
 
     //---------------这里是把yuv编码成h264的方法------------------------
-    public static native void initH264File(String filePath, int rate, int width, int height);
+    public static native void initH264File(String filePath, int rate, int width, int height,int coreCount);
 
     public static native void pushDataToH264File(byte[] src);
 
     public static native void getH264File();
 
     //---------------这里是把pcm编码成aac的方法-------------------------
-    public static native void initAACFile(String filePath);
+    public static native void initAACFile(String filePath,int coreCount);
 
     public static native void pushDataToAACFile(byte[] src);
 

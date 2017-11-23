@@ -13,6 +13,7 @@ import com.hzl.smallvideo.listener.CameraYUVDataListener;
 import com.hzl.smallvideo.listener.RecordListener;
 import com.hzl.smallvideo.manager.api.MangerApi;
 import com.hzl.smallvideo.manager.camera.CameraSurfaceView;
+import com.hzl.smallvideo.util.AppUtil;
 import com.hzl.smallvideo.util.CameraUtil;
 import com.hzl.smallvideo.util.FFmpegUtil;
 import com.libyuv.util.YuvUtil;
@@ -117,7 +118,7 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            FFmpegUtil.initH264File(filePath, mCameraUtil.getFrameRate(), outWidth, outHeight);
+            FFmpegUtil.initH264File(filePath, mCameraUtil.getFrameRate(), outWidth, outHeight, AppUtil.getCpuCores());
             //一些数据的初始化操作
             yuvList = new LinkedBlockingQueue<>();
             yuvData = new byte[outWidth * outHeight * 3 / 2];
@@ -142,7 +143,10 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
         isPause = false;
         //表示要重新去操作了
         isFirstOnDrawFrame = true;
+        stopTime = System.currentTimeMillis();
     }
+
+    private long stopTime;
 
     @Override
     public String getFilePath() {
@@ -155,7 +159,7 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
     }
 
     @Override
-    public void onCallback(final byte[] data) {
+    public void onCallback(byte[] data) {
         if (!isRunning || isPause) { //如果是没有开启录制和暂停就进行返回
             return;
         }
@@ -172,15 +176,18 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
                     try {
                         while (true) {
                             if (yuvList.size() > 0) {
-                                final byte[] data = yuvList.take();
+                                byte[] data = yuvList.take();
                                 if (data != null) {
-                                    final int morientation = mCameraUtil.getMorientation();
+                                    long time = System.currentTimeMillis();
+                                    int morientation = mCameraUtil.getMorientation();
                                     YuvUtil.compressYUV(data, mCameraUtil.getCameraWidth(), mCameraUtil.getCameraHeight(), yuvData, outHeight, outWidth, 0, morientation, morientation == 270 ? mCameraUtil.isMirror() : false);
                                     FFmpegUtil.pushDataToH264File(yuvData);
+                                    Log.i("dddd->", (System.currentTimeMillis() - time) + "");
                                     count++;
                                 }
                             } else if (!isRunning && !isPause) {
                                 FFmpegUtil.getH264File();
+                                Log.i("dddd->", "time:" + (System.currentTimeMillis() - stopTime));
                                 Log.i("ddddssss->", "count:" + count + ",time:" + time + ",fps:" + (count / time));
                                 if (listener != null) {
                                     listener.videoComplete(count / time);

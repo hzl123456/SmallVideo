@@ -1,7 +1,8 @@
 #include "ffmpeg_encode_h264.h"
 #include "ffmpeg_config.h"
 
-void FFmpegEncodeH264::initH264File(const char *filePath, int rate, int width, int height) {
+void FFmpegEncodeH264::initH264File(const char *filePath, int rate, int width, int height,
+                                    int coreCount) {
 //获取yuv数据和路径已经大小，一些数据的初始化
     video_i = 0;
     out_file = filePath;
@@ -29,23 +30,23 @@ void FFmpegEncodeH264::initH264File(const char *filePath, int rate, int width, i
     //视频的码率设置，540p默认为2M
     pCodecCtx->bit_rate = 2 * 1024 * 1024;
     //每xxx帧插入1个I帧，I帧越少，视频越小
-    pCodecCtx->gop_size = 15;  //关键帧的间隔数
+    pCodecCtx->gop_size = 250;  //关键帧的间隔数
     //帧率的基本单位，我们用分数来表示，帧率通过外面传进来
     pCodecCtx->time_base = (AVRational) {1, rate};
     //编码的线程
-    pCodecCtx->thread_count = 15;
+    pCodecCtx->thread_count = coreCount;
     //两个非B帧之间允许出现多少个B帧数
     pCodecCtx->max_b_frames = 0;
-    pCodecCtx->qmin = 0;
-    pCodecCtx->qmax = 51;
+    pCodecCtx->qmin = 18;
+    pCodecCtx->qmax = 28;
 
     // Set Option
     AVDictionary *param = 0;
     //H.264
     if (pCodecCtx->codec_id == AV_CODEC_ID_H264) {
-        av_dict_set(&param, "preset", "slow", 0);
         av_dict_set(&param, "tune", "zerolatency", 0);
-        av_dict_set(&param, "profile", "main", 0);
+        av_dict_set(&param, "profile", "baseline", 0);
+        av_opt_set(pCodecCtx->priv_data, "preset", "ultrafast", 0);
     }
     //Show some Information
     av_dump_format(pFormatCtx, 0, out_file, 1);

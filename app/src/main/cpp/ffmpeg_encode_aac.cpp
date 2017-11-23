@@ -1,7 +1,7 @@
 #include "ffmpeg_encode_aac.h"
 #include "ffmpeg_config.h"
 
-void FFmpegEncodeAAC::initAACFile(const char *filePath) {
+void FFmpegEncodeAAC::initAACFile(const char *filePath,int coreCount) {
     //输出aac的文件
     audio_i = 0;
     audio_out_file = filePath;
@@ -25,7 +25,7 @@ void FFmpegEncodeAAC::initAACFile(const char *filePath) {
     audio_pCodecCtx->channel_layout = AV_CH_LAYOUT_MONO;
     audio_pCodecCtx->channels = av_get_channel_layout_nb_channels(audio_pCodecCtx->channel_layout);
     audio_pCodecCtx->bit_rate = 1024 * 1000;
-    audio_pCodecCtx->thread_count = 8;
+    audio_pCodecCtx->thread_count = coreCount;
 
     //Show some information
     av_dump_format(audio_pFormatCtx, 0, audio_out_file, 1);

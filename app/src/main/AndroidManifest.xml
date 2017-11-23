@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.hzl.smallvideo">
 
     <!-- 增加文件存储，录音和访问摄像头的权限 -->
@@ -13,10 +14,10 @@
 
     <application
         android:name=".application.MainApplication"
-        android:hardwareAccelerated="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round">
+        android:roundIcon="@mipmap/ic_launcher_round"
+        tools:replace="android:icon">
         <activity
             android:name=".activity.MainActivity"
             android:screenOrientation="portrait"

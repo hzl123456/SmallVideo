@@ -4,10 +4,11 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 
-import com.hzl.smallvideo.manager.camera.CameraSurfaceView;
 import com.hzl.smallvideo.listener.CameraPictureListener;
 import com.hzl.smallvideo.listener.RecordFinishListener;
 import com.hzl.smallvideo.listener.RecordListener;
+import com.hzl.smallvideo.manager.camera.CameraSurfaceView;
+import com.hzl.smallvideo.util.CommonUtil;
 import com.hzl.smallvideo.util.FFmpegUtil;
 
 import java.io.File;
@@ -81,6 +82,7 @@ public class RecordManager extends RecordListener {
                     new Handler(Looper.getMainLooper()).post(new Runnable() {
                         @Override
                         public void run() {
+                            CommonUtil.disMissDialog();
                             if (mRecordFinishListener != null) {
                                 mRecordFinishListener.onRecordFinish(filePath);
                             }
@@ -127,6 +129,7 @@ public class RecordManager extends RecordListener {
 
     public void stopRecord(RecordFinishListener mRecordFinishListener) {
         this.mRecordFinishListener = mRecordFinishListener;
+        CommonUtil.showDialog("生成视频中");
         mVideoRecordManager.stopRecord();
         mAudioRecordManager.stopRecord();
     }

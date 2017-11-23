@@ -171,6 +171,8 @@ public class CameraUtil {
             parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
         } else if (focusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO)) {
             parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
+        } else {
+            parameters.setFocusMode(focusModes.get(0));
         }
         //设置帧率
         List<Integer> rates = parameters.getSupportedPreviewFrameRates();
@@ -192,8 +194,9 @@ public class CameraUtil {
                 }
             }
         }
-        //设置最大和最小的fps，最高设置为30默认的
-        parameters.setPreviewFpsRange(mFrameRate * 1000, mFrameRate * 1000);
+        //最高设置为30默认的
+        parameters.setPreviewFrameRate(mFrameRate);
+        parameters.setRecordingHint(true);
         //获取最适合的图片的输出大小
         Camera.Size pushSize = null;
         for (Camera.Size size : parameters.getSupportedPictureSizes()) {

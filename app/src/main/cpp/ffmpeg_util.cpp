@@ -13,12 +13,12 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_hzl_smallvideo_util_FFmpegUtil_initH264File(JNIEnv *env, jclass type, jstring filePath_,
                                                      jint rate,
-                                                     jint width, jint height) {
+                                                     jint width, jint height,int coreCount) {
     if (h264_encoder == NULL) {
         h264_encoder = new FFmpegEncodeH264();
     }
     const char *out_file = env->GetStringUTFChars(filePath_, NULL);
-    h264_encoder->initH264File(out_file, rate, width, height);
+    h264_encoder->initH264File(out_file, rate, width, height,coreCount);
 }
 
 extern "C"
@@ -38,12 +38,12 @@ Java_com_hzl_smallvideo_util_FFmpegUtil_getH264File(JNIEnv *env, jclass type) {
 //-----------------------这边是录制音频文件需要的------------------------------
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_hzl_smallvideo_util_FFmpegUtil_initAACFile(JNIEnv *env, jclass type, jstring filePath_) {
+Java_com_hzl_smallvideo_util_FFmpegUtil_initAACFile(JNIEnv *env, jclass type, jstring filePath_,int coreCount) {
     if (aac_encoder == NULL) {
         aac_encoder = new FFmpegEncodeAAC();
     }
     const char *file = env->GetStringUTFChars(filePath_, NULL);
-    aac_encoder->initAACFile(file);
+    aac_encoder->initAACFile(file,coreCount);
 }
 
 extern "C"
