@@ -5,21 +5,22 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Environment;
+import android.util.Log;
 
 import com.hzl.smallvideo.application.MainApplication;
-import com.hzl.smallvideo.manager.api.MangerApi;
-import com.hzl.smallvideo.manager.camera.CameraSurfaceView;
 import com.hzl.smallvideo.listener.CameraPictureListener;
 import com.hzl.smallvideo.listener.CameraYUVDataListener;
 import com.hzl.smallvideo.listener.RecordListener;
+import com.hzl.smallvideo.manager.api.MangerApi;
+import com.hzl.smallvideo.manager.camera.CameraSurfaceView;
 import com.hzl.smallvideo.util.CameraUtil;
 import com.hzl.smallvideo.util.FFmpegUtil;
 import com.libyuv.util.YuvUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import static android.content.Context.SENSOR_SERVICE;
 
@@ -38,14 +39,13 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
     private double time;//编码的时长，最后要根据这个去计算平均的fps，这里的单位用的是秒
     private int count; //编码的总的帧数，最后要根据这个去计算平均的fps
 
-
-    //输出的宽高
-    private int outWidth = 720;
-    private int outHeight = 1280;
+    //输出的宽高,这里给的是540p
+    private int outWidth = 540;
+    private int outHeight = 960;
 
     private volatile boolean isRunning;
     private volatile boolean isFirstOnDrawFrame = true;
-    private volatile Queue<byte[]> yuvList;
+    private BlockingQueue<byte[]> yuvList;
     private boolean isPause;
     private byte[] yuvData;
     private Thread yuvThread;
@@ -119,7 +119,7 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
             }
             FFmpegUtil.initH264File(filePath, mCameraUtil.getFrameRate(), outWidth, outHeight);
             //一些数据的初始化操作
-            yuvList = new LinkedList<>();
+            yuvList = new LinkedBlockingQueue<>();
             yuvData = new byte[outWidth * outHeight * 3 / 2];
             yuvThread = null;
             isFirstOnDrawFrame = false;
@@ -159,32 +159,43 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
         if (!isRunning || isPause) { //如果是没有开启录制和暂停就进行返回
             return;
         }
-        yuvList.offer(data);
+        //添加数据
+        try {
+            yuvList.put(data);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         if (yuvThread == null) {
             yuvThread = new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    while (true) {
-                        if (yuvList.size() > 0) {
-                            final byte[] data = yuvList.poll();
-                            if (data != null) {
-                                final int morientation = mCameraUtil.getMorientation();
-                                YuvUtil.compressYUV(data, mCameraUtil.getCameraWidth(), mCameraUtil.getCameraHeight(), yuvData, outHeight, outWidth, 0, morientation, morientation == 270 ? mCameraUtil.isMirror() : false);
-                                FFmpegUtil.pushDataToH264File(yuvData);
-                                count++;
+                    try {
+                        while (true) {
+                            if (yuvList.size() > 0) {
+                                final byte[] data = yuvList.take();
+                                if (data != null) {
+                                    final int morientation = mCameraUtil.getMorientation();
+                                    YuvUtil.compressYUV(data, mCameraUtil.getCameraWidth(), mCameraUtil.getCameraHeight(), yuvData, outHeight, outWidth, 0, morientation, morientation == 270 ? mCameraUtil.isMirror() : false);
+                                    FFmpegUtil.pushDataToH264File(yuvData);
+                                    count++;
+                                }
+                            } else if (!isRunning && !isPause) {
+                                FFmpegUtil.getH264File();
+                                Log.i("ddddssss->", "count:" + count + ",time:" + time + ",fps:" + (count / time));
+                                if (listener != null) {
+                                    listener.videoComplete(count / time);
+                                }
+                                break;
                             }
-                        } else if (!isRunning && !isPause) {
-                            FFmpegUtil.getH264File();
-                            if (listener != null) {
-                                listener.videoComplete(count / time);
-                            }
-                            break;
                         }
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
                     }
                 }
             });
             yuvThread.start();
         }
+
     }
 
     @Override

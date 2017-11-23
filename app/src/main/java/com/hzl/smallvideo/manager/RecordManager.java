@@ -22,7 +22,7 @@ import java.math.BigDecimal;
 public class RecordManager extends RecordListener {
 
     //小视频录制的时长为15秒,给一个100ms的偏移量
-    public static final float RECORD_TIME = 15.5f;
+    public static final float RECORD_TIME = 15.1f;
 
     private VideoRecordManager mVideoRecordManager;
     private AudioRecordManager mAudioRecordManager;

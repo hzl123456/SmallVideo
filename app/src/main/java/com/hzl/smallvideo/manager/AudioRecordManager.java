@@ -5,14 +5,14 @@ import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.Environment;
 
-import com.hzl.smallvideo.manager.api.MangerApi;
 import com.hzl.smallvideo.listener.RecordListener;
+import com.hzl.smallvideo.manager.api.MangerApi;
 import com.hzl.smallvideo.util.FFmpegUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * 作者：请叫我百米冲刺 on 2017/10/23 上午9:07
@@ -32,17 +32,14 @@ public class AudioRecordManager implements MangerApi {
 
     private AudioRecord mRecorder;
 
-    private int bufferSize;
-
     private volatile boolean isRunning;
     private volatile boolean isFirstOnDrawFrame = true;
     private volatile boolean isPause;
-    private volatile Queue<byte[]> pcmList;
+    private BlockingQueue<byte[]> pcmList;
     private Thread pcmThread;
 
-
     public AudioRecordManager() {
-        bufferSize = AudioRecord.getMinBufferSize(44100, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
+        int bufferSize = AudioRecord.getMinBufferSize(44100, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
         mRecorder = new AudioRecord(MediaRecorder.AudioSource.MIC, 44100, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, bufferSize);
     }
 
@@ -78,25 +75,33 @@ public class AudioRecordManager implements MangerApi {
                 }
                 if (bytesRecord != 0 && bytesRecord != -1) {
                     //获取每一帧的pcm数据,这边需要将pcm转化成aar文件
-                    pcmList.offer(tempBuffer);
+                    try {
+                        pcmList.put(tempBuffer);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                     if (pcmThread == null) {
                         pcmThread = new Thread(new Runnable() {
                             @Override
                             public void run() {
-                                while (true) {
-                                    if (pcmList.size() > 0) {
-                                        final byte[] data = pcmList.poll();
-                                        if (data != null) {
-                                            FFmpegUtil.pushDataToAACFile(data);
+                                try {
+                                    while (true) {
+                                        if (pcmList.size() > 0) {
+                                            final byte[] data = pcmList.take();
+                                            if (data != null) {
+                                                FFmpegUtil.pushDataToAACFile(data);
+                                            }
+                                        } else if (!isRunning && !isPause) {
+                                            FFmpegUtil.getAACFile();
+                                            //进行回调通知
+                                            if (listener != null) {
+                                                listener.audioComplete();
+                                            }
+                                            break;
                                         }
-                                    } else if (!isRunning && !isPause) {
-                                        FFmpegUtil.getAACFile();
-                                        //进行回调通知
-                                        if (listener != null) {
-                                            listener.audioComplete();
-                                        }
-                                        break;
                                     }
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
                                 }
                             }
                         });
@@ -156,7 +161,7 @@ public class AudioRecordManager implements MangerApi {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            pcmList = new LinkedList<>();
+            pcmList = new LinkedBlockingQueue<>();
             pcmThread = null;
             recordThread = null;
             isFirstOnDrawFrame = false;

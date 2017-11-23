@@ -298,6 +298,8 @@ public class CaptureButton extends View {
     }
 
     private class RecordRunnable implements Runnable {
+        private long time;
+
         @Override
         public void run() {
             if (mCaptureListener != null) {
@@ -311,11 +313,16 @@ public class CaptureButton extends View {
                 }
             });
             record_anim.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationStart(Animator animation) {
+                    super.onAnimationStart(animation);
+                    time = System.currentTimeMillis();
+                }
 
                 @Override
                 public void onAnimationEnd(Animator animation) {
                     super.onAnimationEnd(animation);
-                    if (record_anim.getCurrentPlayTime() < 1000) {
+                    if ((System.currentTimeMillis() - time) < 1000) {
                         STATE_SELECTED = STATE_UP = STATE_LESSNESS;
                     } else {
                         //表示此时是录制成功的操作,此时的录制时间是ok的

@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.hardware.Camera;
+import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
@@ -21,6 +22,8 @@ import java.util.List;
  */
 @SuppressWarnings("deprecation")
 public class CameraUtil {
+
+    private static final String TAG = "CameraUtils";
 
     //视频的帧率设置
     private static int MAX_FRAME_RATE = 30;
@@ -53,10 +56,10 @@ public class CameraUtil {
     }
 
     /**
-     * 预览的一个摄像头画面大小，默认为1080p，如果不支持的话就用摄像头默认的
+     * 预览的一个摄像头画面大小，因为输出的大小是540p的，所以这里可以达到预览的大小就是要预览的大小，否则用比它大一丢丢的
      */
-    private int cameraWidth = 1280;
-    private int cameraHeight = 720;
+    private int cameraWidth = 960;
+    private int cameraHeight = 540;
 
     public int getCameraWidth() {
         return cameraWidth;
@@ -81,15 +84,14 @@ public class CameraUtil {
 
 
     private void choosePreviewSize(Camera.Parameters parms, int width, int height) {
-        //先判断是否支持该分辨率
-        Camera.Size maxSize = null;
+        //先判断是否支持该分辨率，取大于等于自己的最小的
+        Camera.Size pushSize = null;
         for (Camera.Size size : parms.getSupportedPreviewSizes()) {
-            //满足16:9的才进行使用并且小于等于cameraWidth的才进行使用
-            if (size.width * 9 == size.height * 16 && size.width <= cameraWidth) {
-                if (maxSize == null) {
-                    maxSize = size;
-                } else if (maxSize.width < size.width) {
-                    maxSize = size;
+            if (size.width * cameraHeight == size.height * cameraWidth && size.width >= cameraWidth) {
+                if (pushSize == null) {
+                    pushSize = size;
+                } else if (pushSize.width > size.width) {
+                    pushSize = size;
                 }
             }
             if (size.width == width && size.height == height) {
@@ -97,11 +99,11 @@ public class CameraUtil {
                 return;
             }
         }
-        if (maxSize != null) {  //如果存在maxSize的话就采用maxSize
-            parms.setPreviewSize(maxSize.width, maxSize.height);
+        if (pushSize != null) {  //如果存在maxSize的话就采用maxSize
+            parms.setPreviewSize(pushSize.width, pushSize.height);
         } else {  //如果没有16:9的话就采用默认的
             Camera.Size ppsfv = parms.getPreferredPreviewSizeForVideo();
-            parms.setPreviewSize(maxSize.width, ppsfv.height);
+            parms.setPreviewSize(ppsfv.width, ppsfv.height);
         }
     }
 
@@ -190,10 +192,23 @@ public class CameraUtil {
                 }
             }
         }
-        //设置最大和最小的fps，如果camera的性能达不到的话，返回的fps还是会低于mFrameRate的
+        //设置最大和最小的fps，最高设置为30默认的
         parameters.setPreviewFpsRange(mFrameRate * 1000, mFrameRate * 1000);
-        //设置图片的大小
-        parameters.setPictureSize(cameraWidth, cameraHeight);
+        //获取最适合的图片的输出大小
+        Camera.Size pushSize = null;
+        for (Camera.Size size : parameters.getSupportedPictureSizes()) {
+            if (size.width * cameraHeight == size.height * cameraWidth && size.width >= cameraWidth) {
+                if (pushSize == null) {
+                    pushSize = size;
+                } else if (pushSize.width > size.width) {
+                    pushSize = size;
+                }
+            }
+        }
+        if (pushSize != null) {
+            parameters.setPictureSize(pushSize.width, pushSize.height);
+        }
+        //设置输出格式
         parameters.setPreviewFormat(ImageFormat.NV21);
         mCamera.setParameters(parameters);
         /**
@@ -202,13 +217,7 @@ public class CameraUtil {
         Camera.Size size = mCamera.getParameters().getPreviewSize();
         cameraWidth = size.width;
         cameraHeight = size.height;
-    }
-
-    /**
-     * 检测是否支持指定特性
-     */
-    private boolean isSupported(List<String> list, String key) {
-        return list != null && list.contains(key);
+        Log.i(TAG, "CameraUtils:" + cameraWidth + "x" + cameraHeight);
     }
 
     public void releaseCamera() {
