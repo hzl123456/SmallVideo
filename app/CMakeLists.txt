@@ -33,44 +33,6 @@ add_library(swresample SHARED IMPORTED)
 add_library(swscale SHARED IMPORTED)
 add_library(fdk-aac SHARED IMPORTED)
 
-if(${ANDROID_ABI} STREQUAL "armeabi")
-set_target_properties(
-    avcodec
-    PROPERTIES IMPORTED_LOCATION
-    ${CMAKE_SOURCE_DIR}/src/main/jniLibs/armeabi/libavcodec.so
-    )
-set_target_properties(
-    avfilter
-    PROPERTIES IMPORTED_LOCATION
-    ${CMAKE_SOURCE_DIR}/src/main/jniLibs/armeabi/libavfilter.so
-    )
-set_target_properties(
-    avformat
-    PROPERTIES IMPORTED_LOCATION
-    ${CMAKE_SOURCE_DIR}/src/main/jniLibs/armeabi/libavformat.so
-    )
-set_target_properties(
-    avutil
-    PROPERTIES IMPORTED_LOCATION
-    ${CMAKE_SOURCE_DIR}/src/main/jniLibs/armeabi/libavutil.so
-    )
-set_target_properties(
-    swresample
-    PROPERTIES IMPORTED_LOCATION
-    ${CMAKE_SOURCE_DIR}/src/main/jniLibs/armeabi/libswresample.so
-    )
-set_target_properties(
-    swscale
-    PROPERTIES IMPORTED_LOCATION
-    ${CMAKE_SOURCE_DIR}/src/main/jniLibs/armeabi/libswscale.so
-    )
-set_target_properties(
-    fdk-aac
-    PROPERTIES IMPORTED_LOCATION
-    ${CMAKE_SOURCE_DIR}/src/main/jniLibs/armeabi/libfdk-aac.so
-    )
-endif(${ANDROID_ABI} STREQUAL "armeabi")
-
 if(${ANDROID_ABI} STREQUAL "armeabi-v7a")
 set_target_properties(
     avcodec
@@ -146,82 +108,6 @@ set_target_properties(
     ${CMAKE_SOURCE_DIR}/src/main/jniLibs/arm64-v8a/libfdk-aac.so
     )
 endif(${ANDROID_ABI} STREQUAL "arm64-v8a")
-
-if(${ANDROID_ABI} STREQUAL "x86")
-set_target_properties(
-    avcodec
-    PROPERTIES IMPORTED_LOCATION
-    ${CMAKE_SOURCE_DIR}/src/main/jniLibs/x86/libavcodec.so
-    )
-set_target_properties(
-    avfilter
-    PROPERTIES IMPORTED_LOCATION
-    ${CMAKE_SOURCE_DIR}/src/main/jniLibs/x86/libavfilter.so
-    )
-set_target_properties(
-    avformat
-    PROPERTIES IMPORTED_LOCATION
-    ${CMAKE_SOURCE_DIR}/src/main/jniLibs/x86/libavformat.so
-    )
-set_target_properties(
-    avutil
-    PROPERTIES IMPORTED_LOCATION
-    ${CMAKE_SOURCE_DIR}/src/main/jniLibs/x86/libavutil.so
-    )
-set_target_properties(
-    swresample
-    PROPERTIES IMPORTED_LOCATION
-    ${CMAKE_SOURCE_DIR}/src/main/jniLibs/x86/libswresample.so
-    )
-set_target_properties(
-    swscale
-    PROPERTIES IMPORTED_LOCATION
-    ${CMAKE_SOURCE_DIR}/src/main/jniLibs/x86/libswscale.so
-    )
-set_target_properties(
-    fdk-aac
-    PROPERTIES IMPORTED_LOCATION
-    ${CMAKE_SOURCE_DIR}/src/main/jniLibs/x86/libfdk-aac.so
-    )
-endif(${ANDROID_ABI} STREQUAL "x86")
-
-if(${ANDROID_ABI} STREQUAL "x86_64")
-set_target_properties(
-    avcodec
-    PROPERTIES IMPORTED_LOCATION
-    ${CMAKE_SOURCE_DIR}/src/main/jniLibs/x86_64/libavcodec.so
-    )
-set_target_properties(
-    avfilter
-    PROPERTIES IMPORTED_LOCATION
-    ${CMAKE_SOURCE_DIR}/src/main/jniLibs/x86_64/libavfilter.so
-    )
-set_target_properties(
-    avformat
-    PROPERTIES IMPORTED_LOCATION
-    ${CMAKE_SOURCE_DIR}/src/main/jniLibs/x86_64/libavformat.so
-    )
-set_target_properties(
-    avutil
-    PROPERTIES IMPORTED_LOCATION
-    ${CMAKE_SOURCE_DIR}/src/main/jniLibs/x86_64/libavutil.so
-    )
-set_target_properties(
-    swresample
-    PROPERTIES IMPORTED_LOCATION
-    ${CMAKE_SOURCE_DIR}/src/main/jniLibs/x86_64/libswresample.so
-    )
-set_target_properties(
-    swscale
-    PROPERTIES IMPORTED_LOCATION
-    ${CMAKE_SOURCE_DIR}/src/main/jniLibs/x86_64/libswscale.so
-    )
-set_target_properties(
-    fdk-aac
-    PROPERTIES IMPORTED_LOCATION
-    ${CMAKE_SOURCE_DIR}/src/main/jniLibs/x86_64/libfdk-aac.so
-    )
-endif(${ANDROID_ABI} STREQUAL "x86_64")
 
 include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/include)
 

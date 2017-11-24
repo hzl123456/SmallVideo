@@ -1,5 +1,4 @@
 #include "ffmpeg_encode_mp4.h"
-#include "ffmpeg_config.h"
 #include "android_log.h"
 
 void FFmpegEncodeMp4::getMP4File(const char *in_filename_v, const char *in_filename_a,
