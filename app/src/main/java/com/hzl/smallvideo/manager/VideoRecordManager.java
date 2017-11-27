@@ -108,6 +108,13 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
         if (isFirstOnDrawFrame) {
             //实例化yuvutil
             YuvUtil.init(mCameraUtil.getCameraHeight(), mCameraUtil.getCameraWidth(), outWidth, outHeight);
+//            //实例化水印的一些参数,默认是采用argb_888去读取一张图片
+//            Bitmap bitmap = BitmapFactory.decodeResource(MainApplication.getInstance().getResources(), R.mipmap.ic_launcher_round);
+//            ByteBuffer buffer = ByteBuffer.allocate(bitmap.getByteCount());
+//            bitmap.copyPixelsToBuffer(buffer);
+//            int startX = 0;
+//            int startY = 0;
+//            YuvUtil.initWaterMark(buffer.array(), bitmap.getWidth(), bitmap.getHeight(), startX, startY);
             //实例化ffmpeg的信息
             try {
                 File file = new File(filePath);
