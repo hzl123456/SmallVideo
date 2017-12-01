@@ -33,15 +33,4 @@ public class YuvUtil {
      * @param dst_height 输出的高
      **/
     public static native void init(int width, int height, int dst_width, int dst_height);
-
-    /**
-     * 实例化水印的数据
-     *
-     * @param src    rgba数据
-     * @param width  水印的宽
-     * @param height 水印的高
-     * @param startX 水印的x的开始位置
-     * @param startY 水印的y的开始位置
-     **/
-    public static native void initWaterMark(byte[] src, int width, int height, int startX, int startY);
 }

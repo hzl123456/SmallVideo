@@ -1,11 +1,17 @@
 package com.hzl.smallvideo.manager;
 
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Environment;
-import android.util.Log;
+import android.text.Layout;
+import android.text.StaticLayout;
+import android.text.TextPaint;
 
 import com.hzl.smallvideo.application.MainApplication;
 import com.hzl.smallvideo.listener.CameraPictureListener;
@@ -15,6 +21,7 @@ import com.hzl.smallvideo.manager.api.MangerApi;
 import com.hzl.smallvideo.manager.camera.CameraSurfaceView;
 import com.hzl.smallvideo.util.AppUtil;
 import com.hzl.smallvideo.util.CameraUtil;
+import com.hzl.smallvideo.util.CommonUtil;
 import com.hzl.smallvideo.util.FFmpegUtil;
 import com.libyuv.util.YuvUtil;
 
@@ -72,6 +79,10 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
     }
 
     public int changeCamera() {
+        if (isRunning) {
+            CommonUtil.showToast("录制中不能切换摄像头");
+            return mCameraUtil.getCurrentCameraType();
+        }
         return mCameraSurfaceView.changeCamera();
     }
 
@@ -98,6 +109,37 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
         mSensorManager.unregisterListener(this);
     }
 
+    private Bitmap getWatermarkBitmap() {
+        TextPaint mPaint = new TextPaint();
+        mPaint.setDither(true);
+        mPaint.setAntiAlias(true);
+        mPaint.setColor(Color.WHITE);
+        mPaint.setTextSize(25);
+        mPaint.setTextAlign(Paint.Align.CENTER);
+        mPaint.setStyle(Paint.Style.FILL_AND_STROKE);
+
+        Bitmap bitmap = Bitmap.createBitmap(200, 55, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        String text = "请叫我百米冲刺";
+        StaticLayout textLayout = new StaticLayout(text, mPaint, bitmap.getWidth(), Layout.Alignment.ALIGN_NORMAL, 1f, 0, false);
+        canvas.translate(bitmap.getWidth() / 2, 0);
+        textLayout.draw(canvas);
+
+        float textSize = mPaint.getTextSize();
+        text = "mail@hezhilin.cc";
+        mPaint.setTextSize(20);
+        textLayout = new StaticLayout(text, mPaint, bitmap.getWidth(), Layout.Alignment.ALIGN_NORMAL, 1f, 0, false);
+        canvas.translate(0, textSize + 3);
+        textLayout.draw(canvas);
+        return bitmap;
+//        //实例化水印的一些参数,默认是采用argb_888去读取一张图片
+//        Bitmap bitmap = getWatermarkBitmap();
+//        ByteBuffer buffer = ByteBuffer.allocate(bitmap.getByteCount());
+//        bitmap.copyPixelsToBuffer(buffer);
+//        int startX = outWidth - bitmap.getWidth() - 20;
+//        int startY = 20;
+    }
+
     @Override
     public void onDestroy() {
 
@@ -108,13 +150,6 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
         if (isFirstOnDrawFrame) {
             //实例化yuvutil
             YuvUtil.init(mCameraUtil.getCameraHeight(), mCameraUtil.getCameraWidth(), outWidth, outHeight);
-//            //实例化水印的一些参数,默认是采用argb_888去读取一张图片
-//            Bitmap bitmap = BitmapFactory.decodeResource(MainApplication.getInstance().getResources(), R.mipmap.ic_launcher_round);
-//            ByteBuffer buffer = ByteBuffer.allocate(bitmap.getByteCount());
-//            bitmap.copyPixelsToBuffer(buffer);
-//            int startX = 0;
-//            int startY = 0;
-//            YuvUtil.initWaterMark(buffer.array(), bitmap.getWidth(), bitmap.getHeight(), startX, startY);
             //实例化ffmpeg的信息
             try {
                 File file = new File(filePath);
@@ -189,13 +224,10 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
                                     int morientation = mCameraUtil.getMorientation();
                                     YuvUtil.compressYUV(data, mCameraUtil.getCameraWidth(), mCameraUtil.getCameraHeight(), yuvData, outHeight, outWidth, 0, morientation, morientation == 270 ? mCameraUtil.isMirror() : false);
                                     FFmpegUtil.pushDataToH264File(yuvData);
-                                    Log.i("dddd->", (System.currentTimeMillis() - time) + "");
                                     count++;
                                 }
                             } else if (!isRunning && !isPause) {
                                 FFmpegUtil.getH264File();
-                                Log.i("dddd->", "time:" + (System.currentTimeMillis() - stopTime));
-                                Log.i("ddddssss->", "count:" + count + ",time:" + time + ",fps:" + (count / time));
                                 if (listener != null) {
                                     listener.videoComplete(count / time);
                                 }

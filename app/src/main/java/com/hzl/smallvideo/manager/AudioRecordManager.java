@@ -38,9 +38,10 @@ public class AudioRecordManager implements MangerApi {
     private volatile boolean isPause;
     private BlockingQueue<byte[]> pcmList;
     private Thread pcmThread;
+    private int bufferSize;
 
     public AudioRecordManager() {
-        int bufferSize = AudioRecord.getMinBufferSize(44100, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
+        bufferSize = AudioRecord.getMinBufferSize(44100, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
         mRecorder = new AudioRecord(MediaRecorder.AudioSource.MIC, 44100, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, bufferSize);
     }
 
@@ -61,8 +62,12 @@ public class AudioRecordManager implements MangerApi {
     Runnable recordRunnable = new Runnable() {
         @Override
         public void run() {
+            if (mRecorder == null) {
+                mRecorder = new AudioRecord(MediaRecorder.AudioSource.MIC, 44100, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, bufferSize);
+            }
             android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
             int bytesRecord;
+            //如果是单声道的话用2048，立体声的话用4096
             byte[] tempBuffer = new byte[2048];
             if (mRecorder.getState() != AudioRecord.STATE_INITIALIZED) {
                 stopRecord();
