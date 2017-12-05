@@ -88,7 +88,7 @@ void FFmpegEncodeH264::pushDataToH264File(uint8_t *src_) {
 
 void FFmpegEncodeH264::getH264File() {
     //Flush Encoder
-    FFmpegConfig::flush_encoder(pFormatCtx, 0);
+    FFmpegConfig::flush_encoder_video(pFormatCtx, 0);
     //Write file trailer
     av_write_trailer(pFormatCtx);
     //Clean

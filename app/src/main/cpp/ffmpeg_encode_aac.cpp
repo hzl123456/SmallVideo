@@ -1,7 +1,7 @@
 #include "ffmpeg_encode_aac.h"
 #include "ffmpeg_config.h"
 
-void FFmpegEncodeAAC::initAACFile(const char *filePath,int coreCount) {
+void FFmpegEncodeAAC::initAACFile(const char *filePath, int coreCount) {
     //输出aac的文件
     audio_i = 0;
     audio_out_file = filePath;
@@ -67,7 +67,7 @@ void FFmpegEncodeAAC::pushDataToAACFile(uint8_t *src_) {
 
 void FFmpegEncodeAAC::getAACFile() {
     //Flush Encoder
-    FFmpegConfig::flush_encoder(audio_pFormatCtx, 0);
+    FFmpegConfig::flush_encoder_audio(audio_pFormatCtx, 0);
     //Write Trailer
     av_write_trailer(audio_pFormatCtx);
     //Clean

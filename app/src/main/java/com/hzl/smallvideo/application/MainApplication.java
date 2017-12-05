@@ -3,6 +3,10 @@ package com.hzl.smallvideo.application;
 import android.app.Activity;
 import android.app.Application;
 
+import com.github.hiteshsondhi88.libffmpeg.FFmpeg;
+import com.github.hiteshsondhi88.libffmpeg.LoadBinaryResponseHandler;
+import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegNotSupportedException;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -42,8 +46,16 @@ public class MainApplication extends Application {
         super.onCreate();
         INSTANCE = this;
         initExceptionHandler();
+        loadFFmpegBinary();
     }
 
+    private void loadFFmpegBinary() {
+        FFmpeg ffmpeg = FFmpeg.getInstance(this);
+        try {
+            ffmpeg.loadBinary(new LoadBinaryResponseHandler());
+        } catch (FFmpegNotSupportedException e) {
+        }
+    }
 
     /**
      * 错误进行崩溃处理

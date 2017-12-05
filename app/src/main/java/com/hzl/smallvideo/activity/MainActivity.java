@@ -8,12 +8,17 @@ import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.VideoView;
 
+import com.github.hiteshsondhi88.libffmpeg.ExecuteBinaryResponseHandler;
+import com.github.hiteshsondhi88.libffmpeg.FFmpeg;
+import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegCommandAlreadyRunningException;
 import com.hzl.smallvideo.R;
 import com.hzl.smallvideo.application.MainApplication;
 import com.hzl.smallvideo.listener.CameraPictureListener;
@@ -23,6 +28,7 @@ import com.hzl.smallvideo.manager.RecordManager;
 import com.hzl.smallvideo.manager.camera.CameraSurfaceView;
 import com.hzl.smallvideo.manager.camera.CaptureButton;
 import com.hzl.smallvideo.util.AppUtil;
+import com.hzl.smallvideo.util.BitmapUtil;
 import com.hzl.smallvideo.util.CommonUtil;
 import com.hzl.smallvideo.util.PermissionsUtils;
 import com.hzl.smallvideo.view.WatermarkView;
@@ -174,12 +180,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
             @Override
             public void getRecordResult() { //需要录制
-                CommonUtil.showToast("视频保存成功");
-                mVideoView.stopPlayback();
-                mVideoView.setVisibility(View.GONE);
-                //显示顶部的按钮
-                mBtnCamera.setVisibility(View.VISIBLE);
-                mBtnLight.setVisibility(View.VISIBLE);
+                //进行水印添加的操作，然后保存本地
+                addDefaultWatermark();
             }
 
             @Override
@@ -194,6 +196,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
             @Override
             public void actionRecord() { //对视频和图片进行操作，主要是添加水印
+                //TODO 自定义水印的添加
                 //mWatermark.setVisibility(View.VISIBLE);
                 CommonUtil.showToast("该功能暂未开放");
             }
@@ -210,6 +213,62 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 mWatermark.setVisibility(View.GONE);
             }
         });
+    }
+
+    public void addDefaultWatermark() {
+        //获取默认的水印信息并且保存为本地的png图片
+        final String waterPath = Environment.getExternalStorageDirectory().getPath() + File.separator + "water.png";
+        Bitmap bitmap = BitmapUtil.getDefaultWatermarkBitmap();
+        AppUtil.saveBitmapToFile(bitmap, waterPath);
+        //进行水印的添加
+        CommonUtil.showDialog("正在保存视频");
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                final String outPath = Environment.getExternalStorageDirectory().getPath() + File.separator + System.currentTimeMillis() + ".mp4";
+                //直接使用命令行的方式来添加水印
+                String[] commands = new String[8];
+                commands[0] = "-i";
+                commands[1] = MainActivity.this.filePath;
+                commands[2] = "-i";
+                commands[3] = waterPath;
+                commands[4] = "-filter_complex";
+                commands[5] = String.format("overlay=main_w-overlay_w-20:main_h-overlay_h-20");
+                commands[6] = "-y";
+                commands[7] = outPath;
+                try {
+                    FFmpeg.getInstance(MainActivity.this).execute(commands, new ExecuteBinaryResponseHandler() {
+                        @Override
+                        public void onSuccess(String message) {
+                            new Handler(Looper.getMainLooper()).post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    CommonUtil.disMissDialog();
+                                    CommonUtil.showToast("视频保存成功");
+                                    //删除没有水印的图片和水印图片
+                                    new File(waterPath).delete();
+                                    new File(MainActivity.this.filePath).delete();
+                                    //取消视频的播放
+                                    mVideoView.stopPlayback();
+                                    mVideoView.setVisibility(View.GONE);
+                                    //显示顶部的按钮
+                                    mBtnCamera.setVisibility(View.VISIBLE);
+                                    mBtnLight.setVisibility(View.VISIBLE);
+                                }
+                            });
+                        }
+
+                        @Override
+                        public void onFailure(String message) {
+                            CommonUtil.disMissDialog();
+                            CommonUtil.showToast("视频保存失败");
+                        }
+                    });
+                } catch (FFmpegCommandAlreadyRunningException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
     }
 
     public void startVideo(String videoPath) {

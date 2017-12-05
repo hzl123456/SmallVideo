@@ -11,7 +11,9 @@ extern "C"
 
 class FFmpegConfig {
 public:
-    static void flush_encoder(AVFormatContext *fmt_ctx, unsigned int stream_index);
+    static void flush_encoder_video(AVFormatContext *fmt_ctx, unsigned int stream_index);
+
+    static void flush_encoder_audio(AVFormatContext *fmt_ctx, unsigned int stream_index);
 };
 
 #endif //SMALLVIDEO_FFMPEG_CONFIG_H

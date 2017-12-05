@@ -13,12 +13,12 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_hzl_smallvideo_util_FFmpegUtil_initH264File(JNIEnv *env, jclass type, jstring filePath_,
                                                      jint rate,
-                                                     jint width, jint height,int coreCount) {
+                                                     jint width, jint height, int coreCount) {
     if (h264_encoder == NULL) {
         h264_encoder = new FFmpegEncodeH264();
     }
     const char *out_file = env->GetStringUTFChars(filePath_, NULL);
-    h264_encoder->initH264File(out_file, rate, width, height,coreCount);
+    h264_encoder->initH264File(out_file, rate, width, height, coreCount);
 }
 
 extern "C"
@@ -38,12 +38,13 @@ Java_com_hzl_smallvideo_util_FFmpegUtil_getH264File(JNIEnv *env, jclass type) {
 //-----------------------这边是录制音频文件需要的------------------------------
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_hzl_smallvideo_util_FFmpegUtil_initAACFile(JNIEnv *env, jclass type, jstring filePath_,int coreCount) {
+Java_com_hzl_smallvideo_util_FFmpegUtil_initAACFile(JNIEnv *env, jclass type, jstring filePath_,
+                                                    int coreCount) {
     if (aac_encoder == NULL) {
         aac_encoder = new FFmpegEncodeAAC();
     }
     const char *file = env->GetStringUTFChars(filePath_, NULL);
-    aac_encoder->initAACFile(file,coreCount);
+    aac_encoder->initAACFile(file, coreCount);
 }
 
 extern "C"
@@ -74,19 +75,4 @@ Java_com_hzl_smallvideo_util_FFmpegUtil_getMP4File(JNIEnv *env, jclass type, jst
     const char *out_filename = env->GetStringUTFChars(mp4FilePath_, 0);
 
     mp4_encoder->getMP4File(in_filename_v, in_filename_a, out_filename, defaultFps, fps);
-}
-
-//-----------------------------这边是添加水印需要---------------------------------
-extern "C"
-JNIEXPORT void JNICALL
-Java_com_hzl_smallvideo_util_FFmpegUtil_addWatermark(JNIEnv *env, jclass type, jstring inputPath_,
-                                                     jstring outputPath_, jstring watermarkPath_,
-                                                     jint left, jint top, jint width, jint height) {
-    const char *inputPath = env->GetStringUTFChars(inputPath_, 0);
-    const char *outputPath = env->GetStringUTFChars(outputPath_, 0);
-    const char *watermarkPath = env->GetStringUTFChars(watermarkPath_, 0);
-
-
-
-
 }

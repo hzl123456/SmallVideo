@@ -18,14 +18,14 @@ public class FFmpegUtil {
     }
 
     //---------------这里是把yuv编码成h264的方法------------------------
-    public static native void initH264File(String filePath, int rate, int width, int height,int coreCount);
+    public static native void initH264File(String filePath, int rate, int width, int height, int coreCount);
 
     public static native void pushDataToH264File(byte[] src);
 
     public static native void getH264File();
 
     //---------------这里是把pcm编码成aac的方法-------------------------
-    public static native void initAACFile(String filePath,int coreCount);
+    public static native void initAACFile(String filePath, int coreCount);
 
     public static native void pushDataToAACFile(byte[] src);
 
@@ -33,7 +33,4 @@ public class FFmpegUtil {
 
     //---------------这里是把h264和aac合成mp4的方法---------------------
     public static native void getMP4File(String h264FilePath, String aacFilePath, String mp4FilePath, int defaultFps, double fps);
-
-    //---------------------这里是添加水印的方法-------------------------
-    public static native void addWatermark(String inputPath, String outputPath, String watermarkPath, int left, int top, int width, int height);
 }
