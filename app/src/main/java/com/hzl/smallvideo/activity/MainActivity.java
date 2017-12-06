@@ -178,7 +178,15 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
             @Override
             public void getRecordResult() { //需要录制
-                addDefaultWatermark();
+                //addDefaultWatermark();
+                CommonUtil.disMissDialog();
+                CommonUtil.showToast("视频保存成功");
+                //取消视频的播放
+                mVideoView.stopPlayback();
+                mVideoView.setVisibility(View.GONE);
+                //显示顶部的按钮
+                mBtnCamera.setVisibility(View.VISIBLE);
+                mBtnLight.setVisibility(View.VISIBLE);
             }
 
             @Override
