@@ -33,4 +33,7 @@ public class FFmpegUtil {
 
     //---------------这里是把h264和aac合成mp4的方法---------------------
     public static native void getMP4File(String h264FilePath, String aacFilePath, String mp4FilePath, long[] timeStamp);
+
+    //----------------------这里是添加水印的方法------------------------
+    public static native void addWatermark(String inputPath, String filters);
 }

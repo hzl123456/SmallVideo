@@ -17,6 +17,7 @@ add_library( # Sets the name of the library.
              SHARED
 
              # Provides a relative path to your source file(s).
+             src/main/cpp/ffmpeg_watermark.cpp
              src/main/cpp/ffmpeg_encode_h264.cpp
              src/main/cpp/ffmpeg_encode_aac.cpp
              src/main/cpp/ffmpeg_encode_mp4.cpp

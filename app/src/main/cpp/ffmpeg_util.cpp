@@ -3,10 +3,12 @@
 #include "ffmpeg_encode_aac.h"
 #include "ffmpeg_encode_h264.h"
 #include "ffmpeg_encode_mp4.h"
+#include "ffmpeg_watermark.h"
 
 FFmpegEncodeH264 *h264_encoder;
 FFmpegEncodeAAC *aac_encoder;
 FFmpegEncodeMp4 *mp4_encoder;
+FFmpegWatermark *watermark;
 
 extern "C"
 JNIEXPORT void JNICALL
@@ -75,4 +77,18 @@ Java_com_hzl_smallvideo_util_FFmpegUtil_getMP4File(JNIEnv *env, jclass type, jst
     const long *timeStamp = (long *) env->GetLongArrayElements(timeStamp_, NULL);
 
     mp4_encoder->getMP4File(in_filename_v, in_filename_a, out_filename, timeStamp);
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_hzl_smallvideo_util_FFmpegUtil_addWatermark(JNIEnv *env, jclass type, jstring inputPath_,
+                                                     jstring filters_) {
+    const char *inputPath = env->GetStringUTFChars(inputPath_, 0);
+    const char *filters = env->GetStringUTFChars(filters_, 0);
+
+    if (watermark == NULL) {
+        watermark = new FFmpegWatermark();
+    }
+
+    watermark->add_watermark(inputPath, filters);
 }
