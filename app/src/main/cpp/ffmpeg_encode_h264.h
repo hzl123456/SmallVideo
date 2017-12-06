@@ -8,10 +8,11 @@ extern "C"
 #include "libavcodec/avcodec.h"
 #include "libavutil/opt.h"
 }
+
 class FFmpegEncodeH264 {
 
 public:
-    void initH264File(const char *filePath, int rate, int width, int height,int coreCount);
+    void initH264File(const char *filePath, int rate, int width, int height, int coreCount);
 
     void pushDataToH264File(uint8_t *src_);
 

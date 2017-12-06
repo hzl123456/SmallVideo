@@ -8,7 +8,7 @@ package com.hzl.smallvideo.listener;
 public abstract class RecordListener {
 
     //表示h264编码结束
-    public void videoComplete(double fps) {
+    public void videoComplete() {
     }
 
     //表示aac编码结束

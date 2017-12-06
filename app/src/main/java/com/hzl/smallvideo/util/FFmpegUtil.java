@@ -32,5 +32,5 @@ public class FFmpegUtil {
     public static native void getAACFile();
 
     //---------------这里是把h264和aac合成mp4的方法---------------------
-    public static native void getMP4File(String h264FilePath, String aacFilePath, String mp4FilePath, int defaultFps, double fps);
+    public static native void getMP4File(String h264FilePath, String aacFilePath, String mp4FilePath, long[] timeStamp);
 }

@@ -8,7 +8,6 @@ FFmpegEncodeH264 *h264_encoder;
 FFmpegEncodeAAC *aac_encoder;
 FFmpegEncodeMp4 *mp4_encoder;
 
-//-----------------------这边是录制视频文件需要的------------------------------
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_hzl_smallvideo_util_FFmpegUtil_initH264File(JNIEnv *env, jclass type, jstring filePath_,
@@ -66,13 +65,14 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_hzl_smallvideo_util_FFmpegUtil_getMP4File(JNIEnv *env, jclass type, jstring h264FilePath_,
                                                    jstring aacFilePath_, jstring mp4FilePath_,
-                                                   jint defaultFps, jdouble fps) {
+                                                   jlongArray timeStamp_) {
     if (mp4_encoder == NULL) {
         mp4_encoder = new FFmpegEncodeMp4();
     }
     const char *in_filename_v = env->GetStringUTFChars(h264FilePath_, 0);
     const char *in_filename_a = env->GetStringUTFChars(aacFilePath_, 0);
     const char *out_filename = env->GetStringUTFChars(mp4FilePath_, 0);
+    const long *timeStamp = (long *) env->GetLongArrayElements(timeStamp_, NULL);
 
-    mp4_encoder->getMP4File(in_filename_v, in_filename_a, out_filename, defaultFps, fps);
+    mp4_encoder->getMP4File(in_filename_v, in_filename_a, out_filename, timeStamp);
 }

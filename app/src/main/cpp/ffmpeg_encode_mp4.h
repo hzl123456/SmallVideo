@@ -11,8 +11,7 @@ extern "C"
 
 class FFmpegEncodeMp4 {
 public:
-    void getMP4File(const char *h264FilePath_, const char *aacFilePath_, const char *mp4FilePath_,
-                    int defaultFps, double fps);
+    void getMP4File(const char *h264FilePath_, const char *aacFilePath_, const char *mp4FilePath_,const long *timeStamp);
 };
 
 #endif //SMALLVIDEO_FFMPEG_ENCODE_MP4_H

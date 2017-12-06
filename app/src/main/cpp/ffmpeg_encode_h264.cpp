@@ -3,7 +3,7 @@
 
 void FFmpegEncodeH264::initH264File(const char *filePath, int rate, int width, int height,
                                     int coreCount) {
-//获取yuv数据和路径已经大小，一些数据的初始化
+    //获取yuv数据和路径已经大小，一些数据的初始化
     video_i = 0;
     out_file = filePath;
     y_size = width * height;

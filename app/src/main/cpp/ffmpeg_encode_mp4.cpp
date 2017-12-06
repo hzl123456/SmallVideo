@@ -2,10 +2,7 @@
 #include "android_log.h"
 
 void FFmpegEncodeMp4::getMP4File(const char *in_filename_v, const char *in_filename_a,
-                                 const char *out_filename, int defaultFps, double fps) {
-    //------------代码的方式将h264和aac合成mp4文件--------------
-    bool hasPlus1 = false;
-    bool hasPlus2 = false;
+                                 const char *out_filename, const long *timeStamp) {
 
     AVOutputFormat *ofmt = NULL;
     //Input AVFormatContext and Output AVFormatContext  
@@ -15,26 +12,27 @@ void FFmpegEncodeMp4::getMP4File(const char *in_filename_v, const char *in_filen
     int videoindex_v = -1, videoindex_out = -1;
     int audioindex_a = -1, audioindex_out = -1;
     int frame_index = 0;
+    int64_t total_time = 0;
     int64_t cur_pts_v = 0, cur_pts_a = 0;
 
     av_register_all();
     //Input  
     if ((ret = avformat_open_input(&ifmt_ctx_v, in_filename_v, 0, 0)) < 0) {
         LOGI("Could not open input file.");
-        goto end;
+        return;
     }
     if ((ret = avformat_find_stream_info(ifmt_ctx_v, 0)) < 0) {
         LOGI("Failed to retrieve input stream information");
-        goto end;
+        return;
     }
 
     if ((ret = avformat_open_input(&ifmt_ctx_a, in_filename_a, 0, 0)) < 0) {
         LOGI("Could not open input file.");
-        goto end;
+        return;
     }
     if ((ret = avformat_find_stream_info(ifmt_ctx_a, 0)) < 0) {
         LOGI("Failed to retrieve input stream information");
-        goto end;
+        return;
     }
     LOGI("===========Input Information==========\n");
     av_dump_format(ifmt_ctx_v, 0, in_filename_v, 0);
@@ -46,7 +44,7 @@ void FFmpegEncodeMp4::getMP4File(const char *in_filename_v, const char *in_filen
     if (!ofmt_ctx) {
         LOGI("Could not create output context\n");
         ret = AVERROR_UNKNOWN;
-        goto end;
+        return;
     }
     ofmt = ofmt_ctx->oformat;
 
@@ -59,13 +57,13 @@ void FFmpegEncodeMp4::getMP4File(const char *in_filename_v, const char *in_filen
             if (!out_stream) {
                 LOGI("Failed allocating output stream\n");
                 ret = AVERROR_UNKNOWN;
-                goto end;
+                return;
             }
             videoindex_out = out_stream->index;
             //Copy the settings of AVCodecContext
             if (avcodec_copy_context(out_stream->codec, in_stream->codec) < 0) {
                 LOGI("Failed to copy context from input to output stream codec context\n");
-                goto end;
+                return;
             }
             out_stream->codec->codec_tag = 0;
             if (ofmt_ctx->oformat->flags & AVFMT_GLOBALHEADER)
@@ -83,13 +81,13 @@ void FFmpegEncodeMp4::getMP4File(const char *in_filename_v, const char *in_filen
             if (!out_stream) {
                 LOGI("Failed allocating output stream\n");
                 ret = AVERROR_UNKNOWN;
-                goto end;
+                return;
             }
             audioindex_out = out_stream->index;
             //Copy the settings of AVCodecContext
             if (avcodec_copy_context(out_stream->codec, in_stream->codec) < 0) {
                 LOGI("Failed to copy context from input to output stream codec context\n");
-                goto end;
+                return;
             }
             out_stream->codec->codec_tag = 0;
             if (ofmt_ctx->oformat->flags & AVFMT_GLOBALHEADER)
@@ -106,13 +104,13 @@ void FFmpegEncodeMp4::getMP4File(const char *in_filename_v, const char *in_filen
     if (!(ofmt->flags & AVFMT_NOFILE)) {
         if (avio_open(&ofmt_ctx->pb, out_filename, AVIO_FLAG_WRITE) < 0) {
             LOGI("Could not open output file '%s'", out_filename);
-            goto end;
+            return;
         }
     }
     //Write file header  
     if (avformat_write_header(ofmt_ctx, NULL) < 0) {
         LOGI("Error occurred when opening output file\n");
-        goto end;
+        return;
     }
 
 
@@ -123,7 +121,6 @@ void FFmpegEncodeMp4::getMP4File(const char *in_filename_v, const char *in_filen
 #if USE_AACBSF
     AVBitStreamFilterContext* aacbsfc =  av_bitstream_filter_init("aac_adtstoasc");
 #endif
-
     while (1) {
         AVFormatContext *ifmt_ctx;
         int stream_index = 0;
@@ -140,31 +137,22 @@ void FFmpegEncodeMp4::getMP4File(const char *in_filename_v, const char *in_filen
                     in_stream = ifmt_ctx->streams[pkt.stream_index];
                     out_stream = ofmt_ctx->streams[stream_index];
 
-                    //重新赋值，因为fps是保留的两位小数，所以这里要乘以100变成整数
-                    if (!hasPlus1) {
-                        out_stream->time_base.num *= (fps * 100);
-                        out_stream->time_base.den *= (defaultFps * 100);
-                        hasPlus1 = true;
-                    }
-
                     if (pkt.stream_index == videoindex_v) {
                         //FIX：No PTS (Example: Raw H.264)  
                         //Simple Write PTS  
                         if (pkt.pts == AV_NOPTS_VALUE) {
-                            //Write PTS  
+                            //Write PTS
                             AVRational time_base1 = in_stream->time_base;
                             //Duration between 2 frames (us)
-                            int64_t calc_duration =
-                                    (double) AV_TIME_BASE / av_q2d(in_stream->r_frame_rate);
-                            //Parameters  
-                            pkt.pts = (double) (frame_index * calc_duration) /
-                                      (double) (av_q2d(time_base1) * AV_TIME_BASE);
+                            int64_t calc_duration = (timeStamp[frame_index + 1] - timeStamp[frame_index]) * 1000;
+                            //duration
+                            pkt.duration = (double) calc_duration / (double) (av_q2d(time_base1) * AV_TIME_BASE);
+                            //Parameters
+                            pkt.pts = total_time;
                             pkt.dts = pkt.pts;
-                            pkt.duration = (double) calc_duration /
-                                           (double) (av_q2d(time_base1) * AV_TIME_BASE);
+                            total_time += pkt.duration;
                             frame_index++;
                         }
-
                         cur_pts_v = pkt.pts;
                         break;
                     }
@@ -180,16 +168,9 @@ void FFmpegEncodeMp4::getMP4File(const char *in_filename_v, const char *in_filen
                     in_stream = ifmt_ctx->streams[pkt.stream_index];
                     out_stream = ofmt_ctx->streams[stream_index];
 
-                    //重新赋值，因为fps是保留的两位小数，所以这里要乘以100变成整数
-                    if (!hasPlus2) {
-                        out_stream->time_base.num *= (fps * 100);
-                        out_stream->time_base.den *= (defaultFps * 100);
-                        hasPlus2 = true;
-                    }
-
                     if (pkt.stream_index == audioindex_a) {
 
-                        //FIX：No PTS  
+                        //FIX：No PTS
                         //Simple Write PTS  
                         if (pkt.pts == AV_NOPTS_VALUE) {
                             //Write PTS  
@@ -232,13 +213,8 @@ void FFmpegEncodeMp4::getMP4File(const char *in_filename_v, const char *in_filen
         pkt.pos = -1;
         pkt.stream_index = stream_index;
 
-        LOGI("in_stream:%d_%d,out_stream:%d_%d,duration:%d", in_stream->time_base.num,
-             in_stream->time_base.den,
-             out_stream->time_base.num, out_stream->time_base.den, pkt.duration);
-        LOGI("Write 1 Packet. size:%5d\tpts:%lld\n", pkt.size, pkt.pts);
-        //Write  
+        //Write
         if (av_interleaved_write_frame(ofmt_ctx, &pkt) < 0) {
-            LOGI("Error muxing packet\n");
             break;
         }
         av_free_packet(&pkt);

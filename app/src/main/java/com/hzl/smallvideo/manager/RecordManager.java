@@ -13,7 +13,6 @@ import com.hzl.smallvideo.util.FFmpegUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.math.BigDecimal;
 
 /**
  * 作者：请叫我百米冲刺 on 2017/11/7 上午11:28
@@ -32,8 +31,6 @@ public class RecordManager extends RecordListener {
     private boolean isVideoComplete;
     private boolean isAudioComplete;
 
-    //最后视频的平均的fps的值
-    private double fps;
 
     public RecordManager(CameraSurfaceView mSurfaceView) {
         mVideoRecordManager = new VideoRecordManager(mSurfaceView);
@@ -48,9 +45,7 @@ public class RecordManager extends RecordListener {
     }
 
     @Override
-    public void videoComplete(double fps) {
-        //保留两位小数
-        this.fps = BigDecimal.valueOf(fps).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+    public void videoComplete() {
         isVideoComplete = true;
         getMP4File();
     }
@@ -73,7 +68,7 @@ public class RecordManager extends RecordListener {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    FFmpegUtil.getMP4File(mVideoRecordManager.getFilePath(), mAudioRecordManager.getFilePath(), filePath, mVideoRecordManager.getCameraFps(), RecordManager.this.fps);
+                    FFmpegUtil.getMP4File(mVideoRecordManager.getFilePath(), mAudioRecordManager.getFilePath(), filePath, mVideoRecordManager.getTimeList());
                     //完成之后删除h264和aac
                     new File(mVideoRecordManager.getFilePath()).delete();
                     new File(mAudioRecordManager.getFilePath()).delete();

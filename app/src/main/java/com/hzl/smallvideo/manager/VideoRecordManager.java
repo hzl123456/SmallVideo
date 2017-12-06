@@ -5,6 +5,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Environment;
+import android.util.Log;
 
 import com.hzl.smallvideo.application.MainApplication;
 import com.hzl.smallvideo.listener.CameraPictureListener;
@@ -20,6 +21,8 @@ import com.libyuv.util.YuvUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -36,9 +39,6 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
 
     private CameraSurfaceView mCameraSurfaceView;
     private CameraUtil mCameraUtil;
-    private long startTime;//开始的时间
-    private double time;//编码的时长，最后要根据这个去计算平均的fps，这里的单位用的是秒
-    private int count; //编码的总的帧数，最后要根据这个去计算平均的fps
 
     //输出的宽高,这里给的是540p
     private int outWidth = 540;
@@ -47,6 +47,7 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
     private volatile boolean isRunning;
     private volatile boolean isFirstOnDrawFrame = true;
     private BlockingQueue<byte[]> yuvList;
+    private List<Long> timeList;
     private boolean isPause;
     private byte[] yuvData;
     private Thread yuvThread;
@@ -67,10 +68,6 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
         mSensorManager = (SensorManager) MainApplication.getInstance().getSystemService(SENSOR_SERVICE);
     }
 
-    public int getCameraFps() {
-        return mCameraUtil.getFrameRate();
-    }
-
     public int changeCamera() {
         if (isRunning) {
             CommonUtil.showToast("录制中不能切换摄像头");
@@ -85,6 +82,15 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
 
     public void takePicture(CameraPictureListener listener) {
         mCameraSurfaceView.takePicture(listener);
+    }
+
+    public long[] getTimeList() {
+        Log.i("ssss->", timeList.size() + "");
+        long[] times = new long[timeList.size()];
+        for (int i = 0; i < timeList.size(); i++) {
+            times[i] = timeList.get(i);
+        }
+        return times;
     }
 
     @Override
@@ -125,14 +131,13 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
             FFmpegUtil.initH264File(filePath, mCameraUtil.getFrameRate(), outWidth, outHeight, AppUtil.getCpuCores());
             //一些数据的初始化操作
             yuvList = new LinkedBlockingQueue<>();
+            timeList = new ArrayList<Long>();
             yuvData = new byte[outWidth * outHeight * 3 / 2];
             yuvThread = null;
             isFirstOnDrawFrame = false;
         }
         isRunning = true;
         isPause = false;
-        count = 0;
-        startTime = System.currentTimeMillis();
     }
 
     @Override
@@ -142,7 +147,6 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
 
     @Override
     public void stopRecord() {
-        time = (System.currentTimeMillis() - startTime) / (double) 1000;
         isRunning = false;
         isPause = false;
         //表示要重新去操作了
@@ -167,6 +171,7 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
         //添加数据
         try {
             yuvList.put(data);
+            timeList.add(System.currentTimeMillis());
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -182,12 +187,11 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
                                     int morientation = mCameraUtil.getMorientation();
                                     YuvUtil.compressYUV(data, mCameraUtil.getCameraWidth(), mCameraUtil.getCameraHeight(), yuvData, outHeight, outWidth, 0, morientation, morientation == 270 ? mCameraUtil.isMirror() : false);
                                     FFmpegUtil.pushDataToH264File(yuvData);
-                                    count++;
                                 }
                             } else if (!isRunning && !isPause) {
                                 FFmpegUtil.getH264File();
                                 if (listener != null) {
-                                    listener.videoComplete(count / time);
+                                    listener.videoComplete();
                                 }
                                 break;
                             }
