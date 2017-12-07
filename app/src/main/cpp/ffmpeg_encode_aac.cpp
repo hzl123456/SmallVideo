@@ -24,7 +24,7 @@ void FFmpegEncodeAAC::initAACFile(const char *filePath, int coreCount) {
     audio_pCodecCtx->sample_rate = 44100;
     audio_pCodecCtx->channel_layout = AV_CH_LAYOUT_MONO;
     audio_pCodecCtx->channels = av_get_channel_layout_nb_channels(audio_pCodecCtx->channel_layout);
-    audio_pCodecCtx->bit_rate = 128 * 1000; //比特率，单位时间内传输送或处理的比特的数量
+    audio_pCodecCtx->bit_rate = 128 * 1024; //比特率，单位时间内传输送或处理的比特的数量
     audio_pCodecCtx->thread_count = coreCount;
 
     //Show some information
@@ -46,7 +46,6 @@ void FFmpegEncodeAAC::initAACFile(const char *filePath, int coreCount) {
     //写入头部
     avformat_write_header(audio_pFormatCtx, NULL);
     av_new_packet(&audio_pkt, size);
-
 
 }
 

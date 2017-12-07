@@ -28,7 +28,7 @@ void FFmpegEncodeH264::initH264File(const char *filePath, int rate, int width, i
     pCodecCtx->width = width;
     pCodecCtx->height = height;
     //视频的码率设置，540p默认为2M
-    pCodecCtx->bit_rate = 2 * 1000 * 1000;
+    pCodecCtx->bit_rate = 2 * 1024 * 1024;
     //每xxx帧插入1个I帧，I帧越少，视频越小
     pCodecCtx->gop_size = 50;  //关键帧的间隔数
     //帧率的基本单位，我们用分数来表示，帧率通过外面传进来
