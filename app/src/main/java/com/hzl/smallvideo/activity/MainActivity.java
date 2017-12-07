@@ -242,9 +242,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         //水印添加结束
                         CommonUtil.disMissDialog();
                         CommonUtil.showToast("视频保存成功");
-//                //删除没有水印的图片和水印图片
-//                new File(waterPath).delete();
-//                new File(MainActivity.this.filePath).delete();
+                        //删除没有水印的图片和水印图片
+                        //new File(waterPath).delete();
+                        //new File(MainActivity.this.filePath).delete();
                         //取消视频的播放
                         mVideoView.stopPlayback();
                         mVideoView.setVisibility(View.GONE);
