@@ -132,7 +132,9 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
             final String waterPath = Environment.getExternalStorageDirectory().getPath() + File.separator + "water.png";
             Bitmap bitmap = BitmapUtil.getDefaultWatermarkBitmap();
             AppUtil.saveBitmapToFile(bitmap, waterPath);
-            final String filters = String.format("movie=%s[wm];[in][wm]overlay=0:15[out]", waterPath);
+            int startX = outWidth - bitmap.getWidth();
+            int startY = 12;
+            final String filters = String.format("movie=%s[wm];[in][wm]overlay=%d:%d[out]", waterPath, startX, startY);
             //进行h264文件编码的操作
             FFmpegUtil.initH264File(filePath, mCameraUtil.getFrameRate(), outWidth, outHeight, AppUtil.getCpuCores(), filters);
             //一些数据的初始化操作
