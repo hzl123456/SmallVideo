@@ -14,12 +14,14 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_hzl_smallvideo_util_FFmpegUtil_initH264File(JNIEnv *env, jclass type, jstring filePath_,
                                                      jint rate,
-                                                     jint width, jint height, int coreCount) {
+                                                     jint width, jint height, int coreCount,
+                                                     jstring filter_) {
     if (h264_encoder == NULL) {
         h264_encoder = new FFmpegEncodeH264();
     }
     const char *out_file = env->GetStringUTFChars(filePath_, NULL);
-    h264_encoder->initH264File(out_file, rate, width, height, coreCount);
+    const char *filter = env->GetStringUTFChars(filter_, NULL);
+    h264_encoder->initH264File(out_file, rate, width, height, coreCount, filter);
 }
 
 extern "C"

@@ -18,7 +18,7 @@ public class FFmpegUtil {
     }
 
     //---------------这里是把yuv编码成h264的方法------------------------
-    public static native void initH264File(String filePath, int rate, int width, int height, int coreCount);
+    public static native void initH264File(String filePath, int rate, int width, int height, int coreCount,String filter);
 
     public static native void pushDataToH264File(byte[] src);
 

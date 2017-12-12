@@ -1,11 +1,11 @@
 package com.hzl.smallvideo.manager;
 
+import android.graphics.Bitmap;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Environment;
-import android.util.Log;
 
 import com.hzl.smallvideo.application.MainApplication;
 import com.hzl.smallvideo.listener.CameraPictureListener;
@@ -14,6 +14,7 @@ import com.hzl.smallvideo.listener.RecordListener;
 import com.hzl.smallvideo.manager.api.MangerApi;
 import com.hzl.smallvideo.manager.camera.CameraSurfaceView;
 import com.hzl.smallvideo.util.AppUtil;
+import com.hzl.smallvideo.util.BitmapUtil;
 import com.hzl.smallvideo.util.CameraUtil;
 import com.hzl.smallvideo.util.CommonUtil;
 import com.hzl.smallvideo.util.FFmpegUtil;
@@ -85,7 +86,6 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
     }
 
     public long[] getTimeList() {
-        Log.i("ssss->", timeList.size() + "");
         long[] times = new long[timeList.size()];
         for (int i = 0; i < timeList.size(); i++) {
             times[i] = timeList.get(i);
@@ -128,7 +128,13 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            FFmpegUtil.initH264File(filePath, mCameraUtil.getFrameRate(), outWidth, outHeight, AppUtil.getCpuCores());
+            //获取默认的水印信息并且保存为本地的png图片
+            final String waterPath = Environment.getExternalStorageDirectory().getPath() + File.separator + "water.png";
+            Bitmap bitmap = BitmapUtil.getDefaultWatermarkBitmap();
+            AppUtil.saveBitmapToFile(bitmap, waterPath);
+            final String filters = String.format("movie=%s[wm];[in][wm]overlay=0:15[out]", waterPath);
+            //进行h264文件编码的操作
+            FFmpegUtil.initH264File(filePath, mCameraUtil.getFrameRate(), outWidth, outHeight, AppUtil.getCpuCores(), filters);
             //一些数据的初始化操作
             yuvList = new LinkedBlockingQueue<>();
             timeList = new ArrayList<Long>();
