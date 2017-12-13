@@ -68,10 +68,7 @@ public class RecordManager extends RecordListener {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    FFmpegUtil.getMP4File(mVideoRecordManager.getFilePath(), mAudioRecordManager.getFilePath(), filePath, mVideoRecordManager.getTimeList());
-                    //完成之后删除h264和aac
-                    new File(mVideoRecordManager.getFilePath()).delete();
-                    new File(mAudioRecordManager.getFilePath()).delete();
+                    FFmpegUtil.getMP4File(filePath, mVideoRecordManager.getTimeList());
                     isVideoComplete = false;
                     isAudioComplete = false;
                     new Handler(Looper.getMainLooper()).post(new Runnable() {

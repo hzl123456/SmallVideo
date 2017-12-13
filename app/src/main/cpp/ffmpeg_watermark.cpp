@@ -1,193 +1,134 @@
 #include "ffmpeg_watermark.h"
 #include "android_log.h"
 
-void FFmpegWatermark::open_input_file(const char *filename) {
+void FFmpegWatermark::decode(AVCodecContext *dec_ctx, AVFrame *frame, AVPacket *pkt) {
+    char buf[1024];
     int ret;
-    AVCodec *dec;
-    if (avformat_open_input(&fmt_ctx, filename, NULL, NULL) < 0) {
-        LOGI("Cannot open input file\n");
-        return;
-    }
-    if (avformat_find_stream_info(fmt_ctx, NULL) < 0) {
-        LOGI("Cannot find stream information\n");
-        return;
-    }
-    /* select the video stream */
-    ret = av_find_best_stream(fmt_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, &dec, 0);
+    ret = avcodec_send_packet(dec_ctx, pkt);
     if (ret < 0) {
-        LOGI("Cannot find a video stream in the input file\n");
-        return;
+        LOGI("Error sending a packet for decoding\n");
+        exit(1);
     }
-    video_stream_index = ret;
-    dec_ctx = fmt_ctx->streams[video_stream_index]->codec;
-    av_opt_set_int(dec_ctx, "refcounted_frames", 1, 0);
-    /* init the video decoder */
-    if (avcodec_open2(dec_ctx, dec, NULL) < 0) {
-        LOGI("Cannot open video decoder\n");
-        return;
-    }
-}
-
-void FFmpegWatermark::init_filters(const char *filters_descr) {
-    char args[512];
-    int ret = 0;
-    AVFilter *buffersrc = avfilter_get_by_name("buffer");
-    AVFilter *buffersink = avfilter_get_by_name("buffersink");
-    AVFilterInOut *outputs = avfilter_inout_alloc();
-    AVFilterInOut *inputs = avfilter_inout_alloc();
-    AVRational time_base = fmt_ctx->streams[video_stream_index]->time_base;
-    enum AVPixelFormat pix_fmts[] = {AV_PIX_FMT_GRAY8, AV_PIX_FMT_NONE};
-    filter_graph = avfilter_graph_alloc();
-    if (!outputs || !inputs || !filter_graph) {
-        ret = AVERROR(ENOMEM);
-        goto end;
-    }
-    /* buffer video source: the decoded frames from the decoder will be inserted here. */
-    snprintf(args, sizeof(args),
-             "video_size=%dx%d:pix_fmt=%d:time_base=%d/%d:pixel_aspect=%d/%d",
-             dec_ctx->width, dec_ctx->height, dec_ctx->pix_fmt,
-             time_base.num, time_base.den,
-             dec_ctx->sample_aspect_ratio.num, dec_ctx->sample_aspect_ratio.den);
-    ret = avfilter_graph_create_filter(&buffersrc_ctx, buffersrc, "in",
-                                       args, NULL, filter_graph);
-    if (ret < 0) {
-        LOGI("Cannot create buffer source\n");
-        goto end;
-    }
-    /* buffer video sink: to terminate the filter chain. */
-    ret = avfilter_graph_create_filter(&buffersink_ctx, buffersink, "out",
-                                       NULL, NULL, filter_graph);
-    if (ret < 0) {
-        LOGI("Cannot create buffer sink\n");
-        goto end;
-    }
-    ret = av_opt_set_int_list(buffersink_ctx, "pix_fmts", pix_fmts,
-                              AV_PIX_FMT_NONE, AV_OPT_SEARCH_CHILDREN);
-    if (ret < 0) {
-        LOGI("Cannot set output pixel format\n");
-        goto end;
-    }
-    /*
-     * Set the endpoints for the filter graph. The filter_graph will
-     * be linked to the graph described by filters_descr.
-     */
-    /*
-     * The buffer source output must be connected to the input pad of
-     * the first filter described by filters_descr; since the first
-     * filter input label is not specified, it is set to "in" by
-     * default.
-     */
-    outputs->name = av_strdup("in");
-    outputs->filter_ctx = buffersrc_ctx;
-    outputs->pad_idx = 0;
-    outputs->next = NULL;
-    /*
-     * The buffer sink input must be connected to the output pad of
-     * the last filter described by filters_descr; since the last
-     * filter output label is not specified, it is set to "out" by
-     * default.
-     */
-    inputs->name = av_strdup("out");
-    inputs->filter_ctx = buffersink_ctx;
-    inputs->pad_idx = 0;
-    inputs->next = NULL;
-    if ((ret = avfilter_graph_parse_ptr(filter_graph, filters_descr,
-                                        &inputs, &outputs, NULL)) < 0)
-        goto end;
-    if ((ret = avfilter_graph_config(filter_graph, NULL)) < 0)
-        goto end;
-    end:
-    avfilter_inout_free(&inputs);
-    avfilter_inout_free(&outputs);
-}
-
-void FFmpegWatermark::display_frame(const AVFrame *frame, AVRational time_base) {
-    int x, y;
-    uint8_t *p0, *p;
-    int64_t delay;
-    if (frame->pts != AV_NOPTS_VALUE) {
-        if (last_pts != AV_NOPTS_VALUE) {
-            /* sleep roughly the right amount of time;
-             * usleep is in microseconds, just like AV_TIME_BASE. */
-            delay = av_rescale_q(frame->pts - last_pts,
-                                 time_base, AV_TIME_BASE_Q);
-            if (delay > 0 && delay < 1000000)
-                usleep(delay);
+    while (ret >= 0) {
+        ret = avcodec_receive_frame(dec_ctx, frame);
+        if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
+            return;
+        else if (ret < 0) {
+            LOGI("Error during decoding\n");
+            exit(1);
         }
-        last_pts = frame->pts;
+        LOGI("saving frame %3d\n", dec_ctx->frame_number);
+        //对解码出来的yuv数据进行重新编码操作
+        for (int i = 0; i < buffer_height; i++) {
+            memccpy(buffer + buffer_width * i, frame->data[0] + frame->linesize[0] * i, 1,
+                    buffer_width);
+        }
+        for (int i = 0; i < buffer_height / 2; i++) {
+            memccpy(buffer + buffer_y_size + buffer_width / 2 * i,
+                    frame->data[1] + frame->linesize[1] * i, 1,
+                    buffer_width);
+        }
+        for (int i = 0; i < buffer_height / 2; i++) {
+            memccpy(buffer + buffer_y_size + buffer_u_size + buffer_width / 2 * i,
+                    frame->data[2] + frame->linesize[2] * i, 1,
+                    buffer_width);
+        }
+        h264_encoder->pushDataToH264File(buffer);
     }
-    /* Trivial ASCII grayscale display. */
-    p0 = frame->data[0];
-    puts("\033c");
-    for (y = 0; y < frame->height; y++) {
-        p = p0;
-        for (x = 0; x < frame->width; x++)
-            putchar(" .-+#"[*(p++) / 52]);
-        putchar('\n');
-        p0 += frame->linesize[0];
-    }
-    fflush(stdout);
 }
 
-void FFmpegWatermark::add_watermark(const char *input_path, const char *filters_descr) {
-    int ret;
-    AVPacket packet;
-    AVFrame *frame = av_frame_alloc();
-    AVFrame *filt_frame = av_frame_alloc();
-    int got_frame;
-    if (!frame || !filt_frame) {
-        LOGI("Could not allocate frame");
-        return;
+void FFmpegWatermark::decode_h264_file(const char *inputPath,
+                                       const char *in_filename_v, const char *in_filename_a,
+                                       const char *out_filename, const long *timeStamp) {
+    avcodec_register_all();
+    pkt = av_packet_alloc();
+    if (!pkt) exit(1);
+    /* set end of buffer to 0 (this ensures that no overreading happens for damaged MPEG streams) */
+    memset(inbuf + INBUF_SIZE, 0, AV_INPUT_BUFFER_PADDING_SIZE);
+    /* find the MPEG-1 video decoder */
+    codec = avcodec_find_decoder(AV_CODEC_ID_H264);
+    if (!codec) {
+        LOGI("Codec not found\n");
+        exit(1);
     }
-    av_register_all();
-    avfilter_register_all();
-
-    //open input android filter
-    open_input_file(input_path);
-    init_filters(filters_descr);
-
-    /* read all packets */
-    while (1) {
-        if ((ret = av_read_frame(fmt_ctx, &packet)) < 0)
+    parser = av_parser_init(codec->id);
+    if (!parser) {
+        LOGI("parser not found\n");
+        exit(1);
+    }
+    c = avcodec_alloc_context3(codec);
+    if (!c) {
+        LOGI("Could not allocate video codec context\n");
+        exit(1);
+    }
+    /* For some codecs, such as msmpeg4 and mpeg4, width and height
+       MUST be initialized there because this information is not
+       available in the bitstream. */
+    /* open it */
+    if (avcodec_open2(c, codec, NULL) < 0) {
+        LOGI("Could not open codec\n");
+        exit(1);
+    }
+    f = fopen(inputPath, "rb");
+    if (!f) {
+        LOGI("Could not open %s\n", inputPath);
+        exit(1);
+    }
+    frame = av_frame_alloc();
+    if (!frame) {
+        LOGI("Could not allocate video frame\n");
+        exit(1);
+    }
+    while (!feof(f)) {
+        /* read raw data from the input file */
+        data_size = fread(inbuf, 1, INBUF_SIZE, f);
+        if (!data_size)
             break;
-        if (packet.stream_index == video_stream_index) {
-            got_frame = 0;
-            ret = avcodec_decode_video2(dec_ctx, frame, &got_frame, &packet);
+        /* use the parser to split the data into frames */
+        data = inbuf;
+        while (data_size > 0) {
+            ret = av_parser_parse2(parser, c, &pkt->data, &pkt->size,
+                                   data, data_size, AV_NOPTS_VALUE, AV_NOPTS_VALUE, 0);
             if (ret < 0) {
-                LOGI("Error decoding video\n");
-                break;
+                LOGI("Error while parsing\n");
+                exit(1);
             }
-            if (got_frame) {
-                frame->pts = av_frame_get_best_effort_timestamp(frame);
-                /* push the decoded frame into the filtergraph */
-                if (av_buffersrc_add_frame_flags(buffersrc_ctx, frame, AV_BUFFERSRC_FLAG_KEEP_REF) < 0) {
-                    LOGI("Error while feeding the filtergraph\n");
-                    break;
-                }
-                /* pull filtered frames from the filtergraph */
-                while (1) {
-                    ret = av_buffersink_get_frame(buffersink_ctx, filt_frame);
-                    if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
-                        break;
-                    if (ret < 0)
-                        goto end;
-                    display_frame(filt_frame, buffersink_ctx->inputs[0]->time_base);
-                    av_frame_unref(filt_frame);
-                }
-                av_frame_unref(frame);
-            }
+            data += ret;
+            data_size -= ret;
+            if (pkt->size)
+                decode(c, frame, pkt);
         }
-        av_packet_unref(&packet);
     }
-    end:
-    avfilter_graph_free(&filter_graph);
-    avcodec_close(dec_ctx);
-    avformat_close_input(&fmt_ctx);
+    /* flush the decoder */
+    decode(c, frame, NULL);
+    fclose(f);
+    av_parser_close(parser);
+    avcodec_free_context(&c);
     av_frame_free(&frame);
-    av_frame_free(&filt_frame);
-    if (ret < 0 && ret != AVERROR_EOF) {
-        LOGI("Error occurred: %s\n", av_err2str(ret));
-        return;
-    }
+    av_packet_free(&pkt);
+
+    //完成之后先进行h264文件的生成，然后进行mp4文件的合成
+    h264_encoder->getH264File();
+    mp4_encoder->getMP4File(in_filename_v, in_filename_a, out_filename, timeStamp);
+    //完成之后删除多余的文件，只保留最终输出的文件
+
+}
+
+void FFmpegWatermark::encode_watermark_file(const char *filePath, int rate, int width, int height,
+                                            int coreCount, const char *filter,
+                                            const char *in_filename_v, const char *in_filename_a,
+                                            const char *out_filename, const long *timeStamp) {
+    buffer_width = width;
+    buffer_height = height;
+    buffer_y_size = buffer_width * buffer_height;
+    buffer_u_size = buffer_y_size / 4;
+    buffer = (uint8_t *) malloc(buffer_y_size * 3 / 2);
+    //创建h264编码器
+    h264_encoder = new FFmpegEncodeH264();
+    h264_encoder->initH264File(in_filename_v, rate, width, height, coreCount, filter);
+    //创建合成mp4的合成器
+    mp4_encoder = new FFmpegEncodeMp4();
+    //进行解码操作
+    decode_h264_file(filePath, in_filename_v, in_filename_a, out_filename, timeStamp);
 }
 

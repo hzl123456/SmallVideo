@@ -162,11 +162,6 @@ public class VideoRecordManager implements MangerApi, SensorEventListener, Camer
     }
 
     @Override
-    public String getFilePath() {
-        return filePath;
-    }
-
-    @Override
     public void setRecordListener(RecordListener listener) {
         this.listener = listener;
     }

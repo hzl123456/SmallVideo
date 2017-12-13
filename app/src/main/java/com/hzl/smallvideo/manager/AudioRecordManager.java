@@ -121,11 +121,6 @@ public class AudioRecordManager implements MangerApi {
     };
 
     @Override
-    public String getFilePath() {
-        return aacPath;
-    }
-
-    @Override
     public void setRecordListener(RecordListener listener) {
         this.listener = listener;
     }

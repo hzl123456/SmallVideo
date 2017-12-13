@@ -10,18 +10,32 @@ FFmpegEncodeAAC *aac_encoder;
 FFmpegEncodeMp4 *mp4_encoder;
 FFmpegWatermark *watermark;
 
+//一些参数的保存
+const char *h264_file_path;
+const char *aac_file_path;
+const char *mp4_file_path;
+const long *timeStamp;
+int rate;
+int width;
+int height;
+int coreCount;
+
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_hzl_smallvideo_util_FFmpegUtil_initH264File(JNIEnv *env, jclass type, jstring filePath_,
-                                                     jint rate,
-                                                     jint width, jint height, int coreCount,
+                                                     jint rate_,
+                                                     jint width_, jint height_, int coreCount_,
                                                      jstring filter_) {
     if (h264_encoder == NULL) {
         h264_encoder = new FFmpegEncodeH264();
     }
-    const char *out_file = env->GetStringUTFChars(filePath_, NULL);
+    h264_file_path = env->GetStringUTFChars(filePath_, NULL);
+    rate = rate_;
+    width = width_;
+    height = height_;
+    coreCount = coreCount_;
     const char *filter = env->GetStringUTFChars(filter_, NULL);
-    h264_encoder->initH264File(out_file, rate, width, height, coreCount, filter);
+    h264_encoder->initH264File(h264_file_path, rate, width, height, coreCount, filter);
 }
 
 extern "C"
@@ -42,12 +56,13 @@ Java_com_hzl_smallvideo_util_FFmpegUtil_getH264File(JNIEnv *env, jclass type) {
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_hzl_smallvideo_util_FFmpegUtil_initAACFile(JNIEnv *env, jclass type, jstring filePath_,
-                                                    int coreCount) {
+                                                    int coreCount_) {
     if (aac_encoder == NULL) {
         aac_encoder = new FFmpegEncodeAAC();
     }
-    const char *file = env->GetStringUTFChars(filePath_, NULL);
-    aac_encoder->initAACFile(file, coreCount);
+    coreCount = coreCount_;
+    aac_file_path = env->GetStringUTFChars(filePath_, NULL);
+    aac_encoder->initAACFile(aac_file_path, coreCount);
 }
 
 extern "C"
@@ -67,30 +82,30 @@ Java_com_hzl_smallvideo_util_FFmpegUtil_getAACFile(JNIEnv *env, jclass type) {
 //-----------------------这边是将音视频文件合成需要的------------------------------
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_hzl_smallvideo_util_FFmpegUtil_getMP4File(JNIEnv *env, jclass type, jstring h264FilePath_,
-                                                   jstring aacFilePath_, jstring mp4FilePath_,
+Java_com_hzl_smallvideo_util_FFmpegUtil_getMP4File(JNIEnv *env, jclass type, jstring mp4FilePath_,
                                                    jlongArray timeStamp_) {
     if (mp4_encoder == NULL) {
         mp4_encoder = new FFmpegEncodeMp4();
     }
-    const char *in_filename_v = env->GetStringUTFChars(h264FilePath_, 0);
-    const char *in_filename_a = env->GetStringUTFChars(aacFilePath_, 0);
-    const char *out_filename = env->GetStringUTFChars(mp4FilePath_, 0);
-    const long *timeStamp = (long *) env->GetLongArrayElements(timeStamp_, NULL);
+    mp4_file_path = env->GetStringUTFChars(mp4FilePath_, 0);
+    timeStamp = (long *) env->GetLongArrayElements(timeStamp_, NULL);
 
-    mp4_encoder->getMP4File(in_filename_v, in_filename_a, out_filename, timeStamp);
+    mp4_encoder->getMP4File(h264_file_path, aac_file_path, mp4_file_path, timeStamp);
 }
+
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_hzl_smallvideo_util_FFmpegUtil_addWatermark(JNIEnv *env, jclass type, jstring inputPath_,
-                                                     jstring filters_) {
-    const char *inputPath = env->GetStringUTFChars(inputPath_, 0);
-    const char *filters = env->GetStringUTFChars(filters_, 0);
+Java_com_hzl_smallvideo_util_FFmpegUtil_addWatermark(JNIEnv *env, jclass type, jstring filter_,
+                                                     jstring outH264FilePath_,
+                                                     jstring outMp4FilePath_) {
+    const char *filter = env->GetStringUTFChars(filter_, 0);
+    const char *outH264FilePath = env->GetStringUTFChars(outH264FilePath_, 0);
+    const char *outMp4FilePath = env->GetStringUTFChars(outMp4FilePath_, 0);
 
     if (watermark == NULL) {
         watermark = new FFmpegWatermark();
     }
-
-    watermark->add_watermark(inputPath, filters);
+    watermark->encode_watermark_file(h264_file_path, rate, width, height, coreCount, filter,
+                                     outH264FilePath, aac_file_path, outMp4FilePath, timeStamp);
 }

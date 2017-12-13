@@ -4,40 +4,53 @@
 
 #ifndef SMALLVIDEO_FFMPEG_WATERMARK_H
 #define SMALLVIDEO_FFMPEG_WATERMARK_H
+#define INBUF_SIZE 4096
 
-#include <unistd.h>
+#include "ffmpeg_encode_h264.h"
+#include "ffmpeg_encode_mp4.h"
+
 
 extern "C"
 {
-#include <libavcodec/avcodec.h>
-#include <libavformat/avformat.h>
-#include <libavfilter/avfiltergraph.h>
-#include <libavfilter/buffersink.h>
-#include <libavfilter/buffersrc.h>
-#include <libavutil/opt.h>
-
+#include "libavcodec/avcodec.h"
 }
 
 class FFmpegWatermark {
 
-private:
-    void open_input_file(const char *filename);
-
-    void init_filters(const char *filters_descr);
-
-    void display_frame(const AVFrame *frame, AVRational time_base);
-
 public:
 
-    void add_watermark(const char *input_path, const char *filters_descr);
+    void
+    encode_watermark_file(const char *filePath, int rate, int width, int height, int coreCount,
+                          const char *filter,
+                          const char *in_filename_v, const char *in_filename_a,
+                          const char *out_filename, const long *timeStamp);
 
-    AVFormatContext *fmt_ctx;
-    AVCodecContext *dec_ctx;
-    AVFilterContext *buffersink_ctx;
-    AVFilterContext *buffersrc_ctx;
-    AVFilterGraph *filter_graph;
-    int video_stream_index = -1;
-    int64_t last_pts = AV_NOPTS_VALUE;
+private:
+
+    void
+    decode_h264_file(const char *inputPath, const char *in_filename_v, const char *in_filename_a,
+                     const char *out_filename, const long *timeStamp);
+
+    void decode(AVCodecContext *dec_ctx, AVFrame *frame, AVPacket *pkt);
+
+
+    const AVCodec *codec;
+    AVCodecParserContext *parser;
+    AVCodecContext *c = NULL;
+    FILE *f;
+    AVFrame *frame;
+    uint8_t inbuf[INBUF_SIZE + AV_INPUT_BUFFER_PADDING_SIZE];
+    uint8_t *data;
+    size_t data_size;
+    int ret;
+    AVPacket *pkt;
+    uint8_t *buffer;
+    int buffer_width;
+    int buffer_height;
+    int buffer_y_size;
+    int buffer_u_size;
+    FFmpegEncodeH264 *h264_encoder;
+    FFmpegEncodeMp4 *mp4_encoder;
 };
 
 

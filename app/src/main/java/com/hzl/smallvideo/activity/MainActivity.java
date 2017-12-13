@@ -3,6 +3,7 @@ package com.hzl.smallvideo.activity;
 import android.Manifest;
 import android.app.Activity;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.hardware.Camera;
 import android.media.MediaPlayer;
 import android.os.Build;
@@ -25,13 +26,13 @@ import com.hzl.smallvideo.manager.RecordManager;
 import com.hzl.smallvideo.manager.camera.CameraSurfaceView;
 import com.hzl.smallvideo.manager.camera.CaptureButton;
 import com.hzl.smallvideo.util.AppUtil;
-import com.hzl.smallvideo.util.BitmapUtil;
 import com.hzl.smallvideo.util.CommonUtil;
 import com.hzl.smallvideo.util.FFmpegUtil;
 import com.hzl.smallvideo.util.PermissionsUtils;
 import com.hzl.smallvideo.view.WatermarkView;
 
 import java.io.File;
+import java.io.IOException;
 
 public class MainActivity extends Activity implements View.OnClickListener {
 
@@ -178,15 +179,15 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
             @Override
             public void getRecordResult() { //需要录制
-                //addDefaultWatermark();
-                CommonUtil.disMissDialog();
-                CommonUtil.showToast("视频保存成功");
-                //取消视频的播放
-                mVideoView.stopPlayback();
-                mVideoView.setVisibility(View.GONE);
-                //显示顶部的按钮
-                mBtnCamera.setVisibility(View.VISIBLE);
-                mBtnLight.setVisibility(View.VISIBLE);
+                addDefaultWatermark();
+//                CommonUtil.disMissDialog();
+//                CommonUtil.showToast("视频保存成功");
+//                //取消视频的播放
+//                mVideoView.stopPlayback();
+//                mVideoView.setVisibility(View.GONE);
+//                //显示顶部的按钮
+//                mBtnCamera.setVisibility(View.VISIBLE);
+//                mBtnLight.setVisibility(View.VISIBLE);
             }
 
             @Override
@@ -223,18 +224,26 @@ public class MainActivity extends Activity implements View.OnClickListener {
     public void addDefaultWatermark() {
         //获取默认的水印信息并且保存为本地的png图片
         final String waterPath = Environment.getExternalStorageDirectory().getPath() + File.separator + "water.png";
-        Bitmap bitmap = BitmapUtil.getDefaultWatermarkBitmap();
+        Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher_round);
         AppUtil.saveBitmapToFile(bitmap, waterPath);
         //进行水印的添加
         CommonUtil.showDialog("正在保存视频");
         new Thread(new Runnable() {
             @Override
             public void run() {
-                final String outPath = Environment.getExternalStorageDirectory().getPath() + File.separator + System.currentTimeMillis() + ".mp4";
+                final String outH264Path = Environment.getExternalStorageDirectory().getPath() + File.separator + "out.h264";
+                final String outMp4Path = Environment.getExternalStorageDirectory().getPath() + File.separator + System.currentTimeMillis() + ".mp4";
+                //创建文件
+                try {
+                    new File(outH264Path).createNewFile();
+                    new File(outMp4Path).createNewFile();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 //直接使用命令行的方式来添加水印
-                final String filters = String.format("movie=%s[wm];[in][wm]overlay=0:0[out]", waterPath);
+                final String filters = String.format("movie=%s[wm];[in][wm]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2[out]", waterPath);
                 //进行水印的添加
-                FFmpegUtil.addWatermark(MainActivity.this.filePath, filters);
+                FFmpegUtil.addWatermark(filters, outH264Path, outMp4Path);
 
                 new Handler(Looper.getMainLooper()).post(new Runnable() {
                     @Override
@@ -242,7 +251,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         //水印添加结束
                         CommonUtil.disMissDialog();
                         CommonUtil.showToast("视频保存成功");
-                        //删除没有水印的图片和水印图片
+                        //删除没有水印的视频和水印图片
                         //new File(waterPath).delete();
                         //new File(MainActivity.this.filePath).delete();
                         //取消视频的播放

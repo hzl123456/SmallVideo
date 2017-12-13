@@ -18,7 +18,7 @@ public class FFmpegUtil {
     }
 
     //---------------这里是把yuv编码成h264的方法------------------------
-    public static native void initH264File(String filePath, int rate, int width, int height, int coreCount,String filter);
+    public static native void initH264File(String filePath, int rate, int width, int height, int coreCount, String filter);
 
     public static native void pushDataToH264File(byte[] src);
 
@@ -32,8 +32,8 @@ public class FFmpegUtil {
     public static native void getAACFile();
 
     //---------------这里是把h264和aac合成mp4的方法---------------------
-    public static native void getMP4File(String h264FilePath, String aacFilePath, String mp4FilePath, long[] timeStamp);
+    public static native void getMP4File(String mp4FilePath, long[] timeStamp);
 
     //----------------------这里是添加水印的方法------------------------
-    public static native void addWatermark(String inputPath, String filters);
+    public static native void addWatermark(String filter, String outH264FilePath, String outMp4FilePath);
 }

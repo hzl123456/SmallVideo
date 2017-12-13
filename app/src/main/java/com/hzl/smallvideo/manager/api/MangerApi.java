@@ -21,7 +21,5 @@ public interface MangerApi {
 
     void stopRecord();
 
-    String getFilePath();
-
     void setRecordListener(RecordListener listener);
 }
