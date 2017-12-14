@@ -1,8 +1,13 @@
 #include "ffmpeg_watermark.h"
 #include "android_log.h"
 
+long getCurrentTime() {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return tv.tv_sec * 1000 + tv.tv_usec / 1000;
+}
+
 void FFmpegWatermark::decode(AVCodecContext *dec_ctx, AVFrame *frame, AVPacket *pkt) {
-    char buf[1024];
     int ret;
     ret = avcodec_send_packet(dec_ctx, pkt);
     if (ret < 0) {
@@ -33,7 +38,9 @@ void FFmpegWatermark::decode(AVCodecContext *dec_ctx, AVFrame *frame, AVPacket *
                     frame->data[2] + frame->linesize[2] * i, 1,
                     buffer_width);
         }
+        long time = getCurrentTime();
         h264_encoder->pushDataToH264File(buffer);
+        LOGI("time:%ld", (getCurrentTime() - time));
     }
 }
 
@@ -111,7 +118,9 @@ void FFmpegWatermark::decode_h264_file(const char *inputPath,
     h264_encoder->getH264File();
     mp4_encoder->getMP4File(in_filename_v, in_filename_a, out_filename, timeStamp);
     //完成之后删除多余的文件，只保留最终输出的文件
-
+    remove(in_filename_v);
+    remove(in_filename_a);
+    remove(inputPath);
 }
 
 void FFmpegWatermark::encode_watermark_file(const char *filePath, int rate, int width, int height,

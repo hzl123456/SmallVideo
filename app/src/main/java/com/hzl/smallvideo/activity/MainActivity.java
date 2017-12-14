@@ -12,6 +12,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
@@ -243,7 +244,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 //直接使用命令行的方式来添加水印
                 final String filters = String.format("movie=%s[wm];[in][wm]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2[out]", waterPath);
                 //进行水印的添加
+                final long time = System.currentTimeMillis();
                 FFmpegUtil.addWatermark(filters, outH264Path, outMp4Path);
+                Log.i("time->", (System.currentTimeMillis() - time) + "");
 
                 new Handler(Looper.getMainLooper()).post(new Runnable() {
                     @Override
@@ -252,8 +255,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         CommonUtil.disMissDialog();
                         CommonUtil.showToast("视频保存成功");
                         //删除没有水印的视频和水印图片
-                        //new File(waterPath).delete();
-                        //new File(MainActivity.this.filePath).delete();
+                        new File(waterPath).delete();
+                        new File(MainActivity.this.filePath).delete();
                         //取消视频的播放
                         mVideoView.stopPlayback();
                         mVideoView.setVisibility(View.GONE);
