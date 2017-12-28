@@ -1,6 +1,8 @@
 #ifndef SMALLVIDEO_FFMPEG_ENCODE_AAC_H
 #define SMALLVIDEO_FFMPEG_ENCODE_AAC_H
 
+#include "threadsafe_queue.cpp"
+
 extern "C"
 {
 #include "libavcodec/avcodec.h"
@@ -8,16 +10,25 @@ extern "C"
 #include "libavcodec/avcodec.h"
 #include "libavutil/opt.h"
 }
+
 class FFmpegEncodeAAC {
 
 public:
-    void initAACFile(const char *filePath,int coreCount);
+
+    bool isCompleted; //是否已经完成编码操作
+
+    void initAACFile(const char *filePath, int coreCount);
 
     void pushDataToAACFile(uint8_t *src_);
 
-    void getAACFile();
+    void endEncode();
+
+    static void* startEncode(void* obj);
 
 private:
+    threadsafe_queue<uint8_t *> frame_queue;
+    bool is_end; //表示数据结束了
+
     AVFormatContext *audio_pFormatCtx;
     AVOutputFormat *audio_fmt;
     AVStream *audio_st;

@@ -115,7 +115,7 @@ void FFmpegWatermark::decode_h264_file(const char *inputPath,
     av_packet_free(&pkt);
 
     //完成之后先进行h264文件的生成，然后进行mp4文件的合成
-    h264_encoder->getH264File();
+    h264_encoder->endEncode();
     mp4_encoder->getMP4File(in_filename_v, in_filename_a, out_filename, timeStamp);
     //完成之后删除多余的文件，只保留最终输出的文件
     remove(in_filename_v);

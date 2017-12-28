@@ -24,8 +24,6 @@ import com.hzl.smallvideo.util.AppUtil;
  */
 public class CaptureButton extends View {
 
-    public final String TAG = "CaptureButtom";
-
     private Paint mPaint;
 
     //绿色进度条和半径
@@ -195,7 +193,6 @@ public class CaptureButton extends View {
         }
     }
 
-    //事件处理
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         switch (event.getAction()) {
@@ -298,6 +295,7 @@ public class CaptureButton extends View {
     }
 
     private class RecordRunnable implements Runnable {
+
         private long time;
 
         @Override

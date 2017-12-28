@@ -151,41 +151,67 @@ void FFmpegEncodeH264::initH264File(const char *filePath, int rate, int width, i
     frame_in->width = pCodecCtx->width;
     frame_in->height = pCodecCtx->height;
     frame_in->format = AV_PIX_FMT_YUV420P;
+
+    //创建子线程和队列
+    is_end = false;
+    isCompleted = false;
+    pthread_t thread;
+    pthread_create(&thread, NULL, FFmpegEncodeH264::startEncode, this);
+}
+
+/**
+ * 启动编码线程
+ */
+void *FFmpegEncodeH264::startEncode(void *obj) {
+    FFmpegEncodeH264 *h264_encoder = (FFmpegEncodeH264 *) obj;
+    while (true) {
+        if (!h264_encoder->frame_queue.empty()) {
+            //input Y,U,V
+            h264_encoder->frame_queue.wait_and_pop(h264_encoder->picture_buf);
+            //将yuv数据进行写入
+            h264_encoder->frame_in->data[0] = h264_encoder->picture_buf;              // Y
+            h264_encoder->frame_in->data[1] =
+                    h264_encoder->picture_buf + h264_encoder->y_size;      // U
+            h264_encoder->frame_in->data[2] =
+                    h264_encoder->picture_buf + h264_encoder->y_size * 5 / 4;  // V
+            h264_encoder->frame_in->pts = (h264_encoder->video_i++);
+            int got_picture = 0;
+
+            av_buffersrc_add_frame(h264_encoder->buffersrc_ctx, h264_encoder->frame_in);
+            av_buffersink_get_frame(h264_encoder->buffersink_ctx, h264_encoder->pFrame);
+
+            //Encode
+            avcodec_encode_video2(h264_encoder->pCodecCtx, &h264_encoder->pkt, h264_encoder->pFrame,
+                                  &got_picture);
+
+            if (got_picture == 1) {
+                h264_encoder->pkt.stream_index = h264_encoder->video_st->index;
+                av_write_frame(h264_encoder->pFormatCtx, &h264_encoder->pkt);
+                av_free_packet(&h264_encoder->pkt);
+            }
+        } else if (h264_encoder->is_end) { //此时表示结束了，并且数据为空了
+            //Flush Encoder
+            FFmpegConfig::flush_encoder_video(h264_encoder->pFormatCtx, 0);
+            //Write file trailer
+            av_write_trailer(h264_encoder->pFormatCtx);
+            //Clean
+            if (h264_encoder->video_st) {
+                avcodec_close(h264_encoder->video_st->codec);
+                av_free(h264_encoder->pFrame);
+                //free(picture_buf);
+            }
+            avio_close(h264_encoder->pFormatCtx->pb);
+            avformat_free_context(h264_encoder->pFormatCtx);
+            h264_encoder->isCompleted = true;
+            return 0;
+        }
+    }
 }
 
 void FFmpegEncodeH264::pushDataToH264File(uint8_t *src_) {
-    //input Y,U,V
-    picture_buf = src_;
-    //将yuv数据进行写入
-    frame_in->data[0] = picture_buf;              // Y
-    frame_in->data[1] = picture_buf + y_size;      // U
-    frame_in->data[2] = picture_buf + y_size * 5 / 4;  // V
-    frame_in->pts = (video_i++);
-    int got_picture = 0;
-
-    av_buffersrc_add_frame(buffersrc_ctx, frame_in);
-    av_buffersink_get_frame(buffersink_ctx, pFrame);
-
-    //Encode
-    avcodec_encode_video2(pCodecCtx, &pkt, pFrame, &got_picture);
-    if (got_picture == 1) {
-        pkt.stream_index = video_st->index;
-        av_write_frame(pFormatCtx, &pkt);
-        av_free_packet(&pkt);
-    }
+    frame_queue.push(src_);
 }
 
-void FFmpegEncodeH264::getH264File() {
-    //Flush Encoder
-    FFmpegConfig::flush_encoder_video(pFormatCtx, 0);
-    //Write file trailer
-    av_write_trailer(pFormatCtx);
-    //Clean
-    if (video_st) {
-        avcodec_close(video_st->codec);
-        av_free(pFrame);
-        //free(picture_buf);
-    }
-    avio_close(pFormatCtx->pb);
-    avformat_free_context(pFormatCtx);
+void FFmpegEncodeH264::endEncode() {
+    is_end = true;
 }

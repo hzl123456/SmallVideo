@@ -1,5 +1,6 @@
 #include "ffmpeg_encode_aac.h"
 #include "ffmpeg_config.h"
+#include "android_log.h"
 
 void FFmpegEncodeAAC::initAACFile(const char *filePath, int coreCount) {
     //输出aac的文件
@@ -47,34 +48,54 @@ void FFmpegEncodeAAC::initAACFile(const char *filePath, int coreCount) {
     avformat_write_header(audio_pFormatCtx, NULL);
     av_new_packet(&audio_pkt, size);
 
+    //创建子线程和队列
+    is_end = false;
+    isCompleted = false;
+    pthread_t thread;
+    pthread_create(&thread, NULL, FFmpegEncodeAAC::startEncode, this);
+}
+
+void *FFmpegEncodeAAC::startEncode(void *obj) {
+    FFmpegEncodeAAC *aac_encoder = (FFmpegEncodeAAC *) obj;
+    while (true) {
+        if (!aac_encoder->frame_queue.empty()) {
+            aac_encoder->frame_queue.wait_and_pop(aac_encoder->audio_frame_buf);
+            //将pcm文件进行写入的操作
+            aac_encoder->audio_pFrame->data[0] = aac_encoder->audio_frame_buf;
+            aac_encoder->audio_pFrame->pts = (aac_encoder->audio_i++);
+            int got_frame = 0;
+            //Encode
+            avcodec_encode_audio2(aac_encoder->audio_pCodecCtx, &aac_encoder->audio_pkt,
+                                  aac_encoder->audio_pFrame, &got_frame);
+            if (got_frame == 1) {
+                aac_encoder->audio_pkt.stream_index = aac_encoder->audio_st->index;
+                av_write_frame(aac_encoder->audio_pFormatCtx, &aac_encoder->audio_pkt);
+                av_free_packet(&aac_encoder->audio_pkt);
+            }
+        } else if (aac_encoder->is_end) { //此时表示结束了，并且数据为空了
+            //Flush Encoder
+            FFmpegConfig::flush_encoder_audio(aac_encoder->audio_pFormatCtx, 0);
+            //Write Trailer
+            av_write_trailer(aac_encoder->audio_pFormatCtx);
+            //Clean
+            if (aac_encoder->audio_st) {
+                avcodec_close(aac_encoder->audio_st->codec);
+                av_free(aac_encoder->audio_pFrame);
+                //av_free(audio_frame_buf);
+            }
+            avio_close(aac_encoder->audio_pFormatCtx->pb);
+            avformat_free_context(aac_encoder->audio_pFormatCtx);
+            aac_encoder->isCompleted = true;
+            return 0;
+        }
+    }
 }
 
 void FFmpegEncodeAAC::pushDataToAACFile(uint8_t *src_) {
-    audio_frame_buf = src_;
-    //将pcm文件进行写入的操作
-    audio_pFrame->data[0] = audio_frame_buf;
-    audio_pFrame->pts = (audio_i++);
-    int got_frame = 0;
-    //Encode
-    avcodec_encode_audio2(audio_pCodecCtx, &audio_pkt, audio_pFrame, &got_frame);
-    if (got_frame == 1) {
-        audio_pkt.stream_index = audio_st->index;
-        av_write_frame(audio_pFormatCtx, &audio_pkt);
-        av_free_packet(&audio_pkt);
-    }
+    //将数据添加到队列里面去
+    frame_queue.push(src_);
 }
 
-void FFmpegEncodeAAC::getAACFile() {
-    //Flush Encoder
-    FFmpegConfig::flush_encoder_audio(audio_pFormatCtx, 0);
-    //Write Trailer
-    av_write_trailer(audio_pFormatCtx);
-    //Clean
-    if (audio_st) {
-        avcodec_close(audio_st->codec);
-        av_free(audio_pFrame);
-        //av_free(audio_frame_buf);
-    }
-    avio_close(audio_pFormatCtx->pb);
-    avformat_free_context(audio_pFormatCtx);
+void FFmpegEncodeAAC::endEncode() {
+    is_end = true;
 }

@@ -83,6 +83,9 @@ public class CameraUtil {
     }
 
 
+    /**
+     * 进行分辨率的选择
+     **/
     private void choosePreviewSize(Camera.Parameters parms, int width, int height) {
         //先判断是否支持该分辨率，取大于等于自己的最小的
         Camera.Size pushSize = null;
@@ -107,6 +110,9 @@ public class CameraUtil {
         }
     }
 
+    /**
+     * 获取摄像头的旋转角度
+     **/
     private int setCameraDisplayOrientation(int cameraId) {
         Camera.CameraInfo info = new android.hardware.Camera.CameraInfo();
         Camera.getCameraInfo(cameraId, info);
@@ -139,6 +145,9 @@ public class CameraUtil {
         return result;
     }
 
+    /**
+     * 打开摄像机
+     **/
     public void openCamera(int cameraType) {
         if (mCamera != null) {
             //释放camera
@@ -223,6 +232,9 @@ public class CameraUtil {
         Log.i(TAG, "CameraUtils:" + cameraWidth + "x" + cameraHeight);
     }
 
+    /**
+     * 释放摄像头
+     **/
     public void releaseCamera() {
         if (mCamera != null) {
             mCamera.stopPreview();
@@ -234,6 +246,9 @@ public class CameraUtil {
         }
     }
 
+    /**
+     * 将摄像头和SurfaceHolder进行绑定
+     **/
     public void handleCameraStartPreview(SurfaceHolder surfaceHolder, Camera.PreviewCallback callback) {
         mCamera.setPreviewCallback(callback);
         try {
@@ -248,6 +263,9 @@ public class CameraUtil {
         startAutoFocus();
     }
 
+    /**
+     * 开启对焦
+     **/
     public void startAutoFocus() {
         try {
             if (mCamera != null && !isFocusing && isStartPreview) { //camera不为空，并且isFocusing=false的时候才去对焦

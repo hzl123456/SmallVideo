@@ -17,6 +17,8 @@ add_library( # Sets the name of the library.
              SHARED
 
              # Provides a relative path to your source file(s).
+             src/main/cpp/vector.cpp
+             src/main/cpp/threadsafe_queue.cpp
              src/main/cpp/ffmpeg_watermark.cpp
              src/main/cpp/ffmpeg_encode_h264.cpp
              src/main/cpp/ffmpeg_encode_aac.cpp

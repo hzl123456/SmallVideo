@@ -12,7 +12,6 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
-import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
@@ -50,8 +49,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
     //音视频的处理的类
     private RecordManager mRecordManager;
 
+    //是否开启闪关灯
     private boolean isLighting;
-
     //拍照的图片
     private Bitmap bitmap;
     //合成视频的路径
@@ -180,15 +179,15 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
             @Override
             public void getRecordResult() { //需要录制
-                addDefaultWatermark();
-//                CommonUtil.disMissDialog();
-//                CommonUtil.showToast("视频保存成功");
-//                //取消视频的播放
-//                mVideoView.stopPlayback();
-//                mVideoView.setVisibility(View.GONE);
-//                //显示顶部的按钮
-//                mBtnCamera.setVisibility(View.VISIBLE);
-//                mBtnLight.setVisibility(View.VISIBLE);
+                //addDefaultWatermark();
+                CommonUtil.disMissDialog();
+                CommonUtil.showToast("视频保存成功");
+                //取消视频的播放
+                mVideoView.stopPlayback();
+                mVideoView.setVisibility(View.GONE);
+                //显示顶部的按钮
+                mBtnCamera.setVisibility(View.VISIBLE);
+                mBtnLight.setVisibility(View.VISIBLE);
             }
 
             @Override
@@ -244,9 +243,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 //直接使用命令行的方式来添加水印
                 final String filters = String.format("movie=%s[wm];[in][wm]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2[out]", waterPath);
                 //进行水印的添加
-                final long time = System.currentTimeMillis();
                 FFmpegUtil.addWatermark(filters, outH264Path, outMp4Path);
-                Log.i("time->", (System.currentTimeMillis() - time) + "");
 
                 new Handler(Looper.getMainLooper()).post(new Runnable() {
                     @Override
@@ -291,7 +288,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 return true;
             }
         });
-
     }
 
     @Override

@@ -6,7 +6,6 @@ import android.os.Looper;
 
 import com.hzl.smallvideo.listener.CameraPictureListener;
 import com.hzl.smallvideo.listener.RecordFinishListener;
-import com.hzl.smallvideo.listener.RecordListener;
 import com.hzl.smallvideo.manager.camera.CameraSurfaceView;
 import com.hzl.smallvideo.util.CommonUtil;
 import com.hzl.smallvideo.util.FFmpegUtil;
@@ -19,71 +18,37 @@ import java.io.IOException;
  * 邮箱：mail@hezhilin.cc
  */
 @SuppressWarnings("deprecation")
-public class RecordManager extends RecordListener {
+public class RecordManager {
+
+    //生成的mp4文件
+    private String filePath;
 
     //小视频录制的时长为15秒,给一个100ms的偏移量
     public static final float RECORD_TIME = 15.1f;
 
     private VideoRecordManager mVideoRecordManager;
     private AudioRecordManager mAudioRecordManager;
+
     private RecordFinishListener mRecordFinishListener;
-
-    private boolean isVideoComplete;
-    private boolean isAudioComplete;
-
 
     public RecordManager(CameraSurfaceView mSurfaceView) {
         mVideoRecordManager = new VideoRecordManager(mSurfaceView);
         mAudioRecordManager = AudioRecordManager.getInstance();
-
-        mVideoRecordManager.setRecordListener(this);
-        mAudioRecordManager.setRecordListener(this);
     }
 
     public int changeCamera() {
         return mVideoRecordManager.changeCamera();
     }
 
-    @Override
-    public void videoComplete() {
-        isVideoComplete = true;
-        getMP4File();
-    }
-
-    @Override
-    public void audioComplete() {
-        isAudioComplete = true;
-        getMP4File();
-    }
-
-    public synchronized void getMP4File() {
-        if (isVideoComplete && isAudioComplete) {
-            final String filePath = Environment.getExternalStorageDirectory().getPath() + File.separator + System.currentTimeMillis() + ".mp4";
-            //创建文件
-            try {
-                new File(filePath).createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    FFmpegUtil.getMP4File(filePath, mVideoRecordManager.getTimeList());
-                    isVideoComplete = false;
-                    isAudioComplete = false;
-                    new Handler(Looper.getMainLooper()).post(new Runnable() {
-                        @Override
-                        public void run() {
-                            CommonUtil.disMissDialog();
-                            if (mRecordFinishListener != null) {
-                                mRecordFinishListener.onRecordFinish(filePath);
-                            }
-                        }
-                    });
-                }
-            }).start();
-
+    public void initMp4File() {
+        filePath = Environment.getExternalStorageDirectory().getPath() + File.separator + System.currentTimeMillis() + ".mp4";
+        //创建文件
+        try {
+            new File(filePath).createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+        FFmpegUtil.initMP4File(filePath, this, "encodeComplete");
     }
 
     public void takePicture(CameraPictureListener listener) {
@@ -110,13 +75,9 @@ public class RecordManager extends RecordListener {
     }
 
     public void startRecord() {
+        initMp4File();
         mVideoRecordManager.startRecord();
         mAudioRecordManager.startRecord();
-    }
-
-    public void pauseRecord() {
-        mVideoRecordManager.pauseRecord();
-        mAudioRecordManager.pauseRecord();
     }
 
     public void stopRecord(RecordFinishListener mRecordFinishListener) {
@@ -124,5 +85,21 @@ public class RecordManager extends RecordListener {
         CommonUtil.showDialog("生成视频中");
         mVideoRecordManager.stopRecord();
         mAudioRecordManager.stopRecord();
+    }
+
+
+    /**
+     * 给jni进行调用的回调函数啊啥的
+     **/
+    public void encodeComplete() {
+        CommonUtil.disMissDialog();
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
+            @Override
+            public void run() {
+                if (mRecordFinishListener != null) {
+                    mRecordFinishListener.onRecordFinish(filePath);
+                }
+            }
+        });
     }
 }

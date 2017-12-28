@@ -5,15 +5,12 @@ import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.Environment;
 
-import com.hzl.smallvideo.listener.RecordListener;
 import com.hzl.smallvideo.manager.api.MangerApi;
 import com.hzl.smallvideo.util.AppUtil;
 import com.hzl.smallvideo.util.FFmpegUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * 作者：请叫我百米冲刺 on 2017/10/23 上午9:07
@@ -27,17 +24,12 @@ public class AudioRecordManager implements MangerApi {
 
     private static AudioRecordManager mInstance;
 
-    private RecordListener listener;
-
     private Thread recordThread;
-
     private AudioRecord mRecorder;
 
     private volatile boolean isRunning;
     private volatile boolean isFirstOnDrawFrame = true;
-    private volatile boolean isPause;
-    private BlockingQueue<byte[]> pcmList;
-    private Thread pcmThread;
+
     private int bufferSize;
 
     public AudioRecordManager() {
@@ -80,50 +72,13 @@ public class AudioRecordManager implements MangerApi {
                     continue;
                 }
                 if (bytesRecord != 0 && bytesRecord != -1) {
-                    //获取每一帧的pcm数据,这边需要将pcm转化成aar文件
-                    try {
-                        pcmList.put(tempBuffer);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    if (pcmThread == null) {
-                        pcmThread = new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                try {
-                                    while (true) {
-                                        if (pcmList.size() > 0) {
-                                            byte[] data = pcmList.take();
-                                            if (data != null) {
-                                                FFmpegUtil.pushDataToAACFile(data);
-                                            }
-                                        } else if (!isRunning && !isPause) {
-                                            FFmpegUtil.getAACFile();
-                                            //进行回调通知
-                                            if (listener != null) {
-                                                listener.audioComplete();
-                                            }
-                                            break;
-                                        }
-                                    }
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        });
-                        pcmThread.start();
-                    }
+                    FFmpegUtil.pushDataToAACFile(tempBuffer);
                 } else {
                     break;
                 }
             }
         }
     };
-
-    @Override
-    public void setRecordListener(RecordListener listener) {
-        this.listener = listener;
-    }
 
     @Override
     public void onResume() {
@@ -162,8 +117,6 @@ public class AudioRecordManager implements MangerApi {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            pcmList = new LinkedBlockingQueue<>();
-            pcmThread = null;
             recordThread = null;
             isFirstOnDrawFrame = false;
         }
@@ -172,14 +125,8 @@ public class AudioRecordManager implements MangerApi {
         }
         if (!recordThread.isAlive()) {
             isRunning = true;
-            isPause = false;
             recordThread.start();
         }
-    }
-
-    @Override
-    public void pauseRecord() {
-        isPause = true;
     }
 
     /**
@@ -188,12 +135,13 @@ public class AudioRecordManager implements MangerApi {
     @Override
     public void stopRecord() {
         isRunning = false;
-        isPause = false;
         //表示要重新去操作了
         isFirstOnDrawFrame = true;
         //在这里只需要停止就好了，，只有退出应用的时候才需要释放
         if (mRecorder != null && mRecorder.getState() == AudioRecord.STATE_INITIALIZED) {
             mRecorder.stop();
         }
+        //结束aac的编码操作
+        FFmpegUtil.endEcodeAAC();
     }
 }

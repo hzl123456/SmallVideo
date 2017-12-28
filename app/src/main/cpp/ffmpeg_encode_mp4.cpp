@@ -144,9 +144,11 @@ void FFmpegEncodeMp4::getMP4File(const char *in_filename_v, const char *in_filen
                             //Write PTS
                             AVRational time_base1 = in_stream->time_base;
                             //Duration between 2 frames (us)
-                            int64_t calc_duration = (timeStamp[frame_index + 1] - timeStamp[frame_index]) * 1000;
+                            int64_t calc_duration =
+                                    (timeStamp[frame_index + 1] - timeStamp[frame_index]) * 1000;
                             //duration
-                            pkt.duration = (double) calc_duration / (double) (av_q2d(time_base1) * AV_TIME_BASE);
+                            pkt.duration = (double) calc_duration /
+                                           (double) (av_q2d(time_base1) * AV_TIME_BASE);
                             //Parameters
                             pkt.pts = total_time;
                             pkt.dts = pkt.pts;

@@ -29,17 +29,17 @@ import com.hzl.smallvideo.util.CameraUtil;
 @SuppressWarnings("deprecation")
 public class CameraSurfaceView extends FrameLayout implements CameraSurfaceApi, Camera.PreviewCallback, SurfaceHolder.Callback {
 
-    private static final String TAG = "CameraSurfaceView";
-
     private SurfaceView mSurfaceView;
+
     private ImageView ivFoucView;
+
     private CameraUtil mCameraUtil;
-    private double pointLength;  //双指刚按下去时候的距离
 
     private CameraYUVDataListener listener;
 
-    private double mTargetAspect = -1.0;
+    private double pointLength;  //双指刚按下去时候的距离
 
+    private double mTargetAspect = -1.0;
 
     public void setCameraYUVDataListener(CameraYUVDataListener listener) {
         this.listener = listener;

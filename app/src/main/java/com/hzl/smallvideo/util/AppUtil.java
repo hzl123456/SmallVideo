@@ -22,6 +22,7 @@ import java.lang.reflect.Method;
 public class AppUtil {
 
     private static int screenWidth;
+
     private static int screenHeight;
 
     private static final FileFilter CPU_FILTER = new FileFilter() {
