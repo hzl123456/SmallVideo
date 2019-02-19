@@ -15,6 +15,7 @@ import android.support.annotation.NonNull;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.VideoView;
 
 import com.hzl.smallvideo.R;
@@ -29,6 +30,7 @@ import com.hzl.smallvideo.util.AppUtil;
 import com.hzl.smallvideo.util.CommonUtil;
 import com.hzl.smallvideo.util.FFmpegUtil;
 import com.hzl.smallvideo.util.PermissionsUtils;
+import com.hzl.smallvideo.util.StatusBarUtil;
 import com.hzl.smallvideo.view.WatermarkView;
 
 import java.io.File;
@@ -45,6 +47,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private ImageView mBtnCamera;
     private ImageView mBtnLight;
     private ImageView ivImage;
+    private RelativeLayout flVideo;
 
     //音视频的处理的类
     private RecordManager mRecordManager;
@@ -89,6 +92,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
     }
 
     private void initView() {
+        StatusBarUtil.setTransparent(getWindow());
+        StatusBarUtil.setDarkMode(getWindow());
+
         mSurfaceView = (CameraSurfaceView) findViewById(R.id.camera_surface);
         mBtnStart = (CaptureButton) findViewById(R.id.btn_start);
         mVideoView = (VideoView) findViewById(R.id.video_view);
@@ -96,6 +102,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         mBtnLight = (ImageView) findViewById(R.id.btn_light);
         ivImage = (ImageView) findViewById(R.id.iv_image);
         mWatermark = (WatermarkView) findViewById(R.id.watermark);
+        flVideo = (RelativeLayout) findViewById(R.id.fl_video);
 
         mBtnCamera.setOnClickListener(this);
         mBtnLight.setOnClickListener(this);
@@ -184,6 +191,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 CommonUtil.showToast("视频保存成功");
                 //取消视频的播放
                 mVideoView.stopPlayback();
+                flVideo.setVisibility(View.GONE);
                 mVideoView.setVisibility(View.GONE);
                 //显示顶部的按钮
                 mBtnCamera.setVisibility(View.VISIBLE);
@@ -194,6 +202,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
             public void deleteRecordResult() {//删除录制
                 new File(filePath).delete();
                 mVideoView.stopPlayback();
+                flVideo.setVisibility(View.GONE);
                 mVideoView.setVisibility(View.GONE);
                 //显示顶部的按钮
                 mBtnCamera.setVisibility(View.VISIBLE);
@@ -256,6 +265,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         new File(MainActivity.this.filePath).delete();
                         //取消视频的播放
                         mVideoView.stopPlayback();
+                        flVideo.setVisibility(View.GONE);
                         mVideoView.setVisibility(View.GONE);
                         //显示顶部的按钮
                         mBtnCamera.setVisibility(View.VISIBLE);
@@ -270,6 +280,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         if (mVideoView.isPlaying()) {
             mVideoView.stopPlayback();
         }
+        flVideo.setVisibility(View.VISIBLE);
         mVideoView.setVisibility(View.VISIBLE);
         mVideoView.setZOrderMediaOverlay(true);
         mVideoView.setVideoPath("file://" + videoPath);

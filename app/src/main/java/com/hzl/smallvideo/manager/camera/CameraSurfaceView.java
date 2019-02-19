@@ -7,9 +7,9 @@ import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.hardware.Camera;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -19,6 +19,7 @@ import com.hzl.smallvideo.listener.CameraPictureListener;
 import com.hzl.smallvideo.listener.CameraYUVDataListener;
 import com.hzl.smallvideo.manager.api.CameraSurfaceApi;
 import com.hzl.smallvideo.util.CameraUtil;
+import com.hzl.smallvideo.view.ResizeAbleSurfaceView;
 
 /**
  * 作者：请叫我百米冲刺 on 2017/11/7 上午10:24
@@ -29,7 +30,7 @@ import com.hzl.smallvideo.util.CameraUtil;
 @SuppressWarnings("deprecation")
 public class CameraSurfaceView extends FrameLayout implements CameraSurfaceApi, Camera.PreviewCallback, SurfaceHolder.Callback {
 
-    private SurfaceView mSurfaceView;
+    private ResizeAbleSurfaceView mSurfaceView;
 
     private ImageView ivFoucView;
 
@@ -38,8 +39,6 @@ public class CameraSurfaceView extends FrameLayout implements CameraSurfaceApi, 
     private CameraYUVDataListener listener;
 
     private double pointLength;  //双指刚按下去时候的距离
-
-    private double mTargetAspect = -1.0;
 
     public void setCameraYUVDataListener(CameraYUVDataListener listener) {
         this.listener = listener;
@@ -62,7 +61,7 @@ public class CameraSurfaceView extends FrameLayout implements CameraSurfaceApi, 
 
     private void init() {
         View view = View.inflate(getContext(), R.layout.layout_camera, null);
-        mSurfaceView = (SurfaceView) view.findViewById(R.id.surface);
+        mSurfaceView = (ResizeAbleSurfaceView) view.findViewById(R.id.surface);
         ivFoucView = (ImageView) view.findViewById(R.id.iv_focus);
         removeAllViews();
         addView(view);
@@ -113,8 +112,12 @@ public class CameraSurfaceView extends FrameLayout implements CameraSurfaceApi, 
             public void run() {
                 mCameraUtil.handleCameraStartPreview(mSurfaceView.getHolder(), CameraSurfaceView.this);
                 //这里可以获取真正的预览的分辨率，在这里要进行屏幕的适配，主要适配非16:9的屏幕
-                mTargetAspect = ((float) mCameraUtil.getCameraHeight()) / mCameraUtil.getCameraWidth();
-                CameraSurfaceView.this.measure(-1, -1);
+                //获取屏幕的宽高，然后计算偏移
+                //根据所得到的宽高和摄像头的宽高来设置比例,这里要让视频进行全屏显示
+                DisplayMetrics dm = getContext().getResources().getDisplayMetrics();
+                int width = dm.widthPixels;
+                int height = dm.heightPixels;
+                mSurfaceView.resize(width, height);
             }
         });
     }
@@ -174,37 +177,6 @@ public class CameraSurfaceView extends FrameLayout implements CameraSurfaceApi, 
         }
         mCameraUtil.startAutoFocus();
     }
-
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        if (mTargetAspect > 0) {
-            int initialWidth = MeasureSpec.getSize(widthMeasureSpec);
-            int initialHeight = MeasureSpec.getSize(heightMeasureSpec);
-
-            int horizPadding = getPaddingLeft() + getPaddingRight();
-            int vertPadding = getPaddingTop() + getPaddingBottom();
-            initialWidth -= horizPadding;
-            initialHeight -= vertPadding;
-
-            double viewAspectRatio = (double) initialWidth / initialHeight;
-            double aspectDiff = mTargetAspect / viewAspectRatio - 1;
-
-            if (Math.abs(aspectDiff) < 0.01) {
-            } else {
-                if (aspectDiff > 0) {
-                    initialHeight = (int) (initialWidth / mTargetAspect);
-                } else {
-                    initialWidth = (int) (initialHeight * mTargetAspect);
-                }
-                initialWidth += horizPadding;
-                initialHeight += vertPadding;
-                widthMeasureSpec = MeasureSpec.makeMeasureSpec(initialWidth, MeasureSpec.EXACTLY);
-                heightMeasureSpec = MeasureSpec.makeMeasureSpec(initialHeight, MeasureSpec.EXACTLY);
-            }
-        }
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-    }
-
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {

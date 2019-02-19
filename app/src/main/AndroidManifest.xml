@@ -4,7 +4,6 @@
     package="com.hzl.smallvideo">
 
     <!-- 增加文件存储，录音和访问摄像头的权限 -->
-    <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.CAMERA" />
@@ -18,11 +17,11 @@
         android:label="@string/app_name"
         android:largeHeap="true"
         android:roundIcon="@mipmap/ic_launcher_round"
+        android:theme="@style/AppTheme"
         tools:replace="android:icon">
         <activity
             android:name=".activity.MainActivity"
-            android:screenOrientation="portrait"
-            android:theme="@android:style/Theme.Light.NoTitleBar.Fullscreen">
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

@@ -112,6 +112,7 @@ void FFmpegEncodeH264::initH264File(const char *filePath, int rate, int width, i
     pCodecCtx->thread_count = coreCount;
     //两个非B帧之间允许出现多少个B帧数
     pCodecCtx->max_b_frames = 0;
+    //量化因子，印象视频的清晰度，0-51，越大约不清晰
     pCodecCtx->qmin = 18;
     pCodecCtx->qmax = 28;
 
@@ -144,10 +145,8 @@ void FFmpegEncodeH264::initH264File(const char *filePath, int rate, int width, i
     //水印的实例化
     init_filters(filter);
     frame_in = av_frame_alloc();
-    frame_buffer_in = (unsigned char *) av_malloc(
-            av_image_get_buffer_size(AV_PIX_FMT_YUV420P, pCodecCtx->width, pCodecCtx->height, 1));
-    av_image_fill_arrays(frame_in->data, frame_in->linesize, frame_buffer_in, AV_PIX_FMT_YUV420P,
-                         pCodecCtx->width, pCodecCtx->height, 1);
+    frame_buffer_in = (unsigned char *) av_malloc(av_image_get_buffer_size(AV_PIX_FMT_YUV420P, pCodecCtx->width, pCodecCtx->height, 1));
+    av_image_fill_arrays(frame_in->data, frame_in->linesize, frame_buffer_in, AV_PIX_FMT_YUV420P, pCodecCtx->width, pCodecCtx->height, 1);
     frame_in->width = pCodecCtx->width;
     frame_in->height = pCodecCtx->height;
     frame_in->format = AV_PIX_FMT_YUV420P;

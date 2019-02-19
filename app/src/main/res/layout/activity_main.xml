@@ -20,19 +20,29 @@
         android:visibility="gone" />
 
     <!--进行视频播放的控件-->
-    <VideoView
-        android:id="@+id/video_view"
+    <!-- 进行水印添加的控件 -->
+    <RelativeLayout
+        android:id="@+id/fl_video"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_centerInParent="true"
-        android:visibility="gone" />
+        android:background="#000000"
+        android:visibility="gone">
 
-    <!-- 进行水印添加的控件 -->
+        <VideoView
+            android:id="@+id/video_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_centerInParent="true"
+            android:visibility="gone" />
+    </RelativeLayout>
+
+
     <com.hzl.smallvideo.view.WatermarkView
         android:id="@+id/watermark"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone" />
+
 
     <ImageView
         android:id="@+id/btn_camera"
@@ -40,6 +50,7 @@
         android:layout_height="30dp"
         android:layout_alignParentRight="true"
         android:layout_margin="20dp"
+        android:layout_marginTop="40dp"
         android:src="@mipmap/camera_change" />
 
     <ImageView
@@ -48,6 +59,7 @@
         android:layout_height="30dp"
         android:layout_centerHorizontal="true"
         android:layout_margin="20dp"
+        android:layout_marginTop="40dp"
         android:background="@null"
         android:src="@mipmap/light_close" />
 
@@ -66,6 +78,5 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="50dp" />
-
 
 </RelativeLayout>
