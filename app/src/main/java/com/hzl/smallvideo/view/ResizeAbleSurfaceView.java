@@ -10,8 +10,10 @@ import android.view.SurfaceView;
  */
 public class ResizeAbleSurfaceView extends SurfaceView {
 
-    private int mWidth = -1;
-    private int mHeight = -1;
+    private int left;
+    private int top;
+    private int width = -1;
+    private int height = -1;
 
     public ResizeAbleSurfaceView(Context context) {
         super(context);
@@ -27,18 +29,28 @@ public class ResizeAbleSurfaceView extends SurfaceView {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        if (-1 == mWidth || -1 == mHeight) {
+        if (width == -1 && height == -1) {
             super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         } else {
-            setMeasuredDimension(mWidth, mHeight);
+            setMeasuredDimension(width, height);
         }
     }
 
-    public void resize(int width, int height) {
-        mWidth = width;
-        mHeight = height;
-        getHolder().setFixedSize(width, height);
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        if (width == -1 && height == -1) {
+            super.onLayout(changed, left, top, right, bottom);
+        } else {
+            super.onLayout(changed, this.left, this.top, this.left + this.width, this.top + this.height);
+        }
+
+    }
+
+    public void resize(int left, int top, int width, int height) {
+        this.left = left;
+        this.top = top;
+        this.width = width;
+        this.height = height;
         requestLayout();
-        invalidate();
     }
 }

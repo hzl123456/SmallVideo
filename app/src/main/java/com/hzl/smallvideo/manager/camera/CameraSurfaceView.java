@@ -7,7 +7,7 @@ import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.hardware.Camera;
 import android.util.AttributeSet;
-import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.View;
@@ -114,10 +114,27 @@ public class CameraSurfaceView extends FrameLayout implements CameraSurfaceApi, 
                 //这里可以获取真正的预览的分辨率，在这里要进行屏幕的适配，主要适配非16:9的屏幕
                 //获取屏幕的宽高，然后计算偏移
                 //根据所得到的宽高和摄像头的宽高来设置比例,这里要让视频进行全屏显示
-                DisplayMetrics dm = getContext().getResources().getDisplayMetrics();
-                int width = dm.widthPixels;
-                int height = dm.heightPixels;
-                mSurfaceView.resize(width, height);
+                int width = mSurfaceView.getWidth();
+                int height = mSurfaceView.getHeight();
+                int screenWidth = width;
+                int screenHeight = height;
+                //这边是相反的
+                int cameraWidth = mCameraUtil.getCameraHeight();
+                int cameraHeight = mCameraUtil.getCameraWidth();
+                //判断宽高比例
+                float radio = ((float) screenWidth) / screenHeight;
+                float cameraRadio = ((float) cameraWidth) / cameraHeight;
+                //进行比例的计算
+                if (radio > cameraRadio) { //此时表示比较宽，以宽来算，让高度裁剪掉
+                    width = screenWidth;
+                    height = (int) (screenWidth / cameraRadio);
+                } else {//此时比较高,以高来算，让宽度裁剪掉
+                    width = (int) (screenHeight * cameraRadio);
+                    height = screenHeight;
+                }
+                int left = (screenWidth - width) / 2;
+                int top = (screenHeight - height) / 2;
+                mSurfaceView.resize(left, top, width, height);
             }
         });
     }
